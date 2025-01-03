@@ -1,0 +1,8 @@
+name: jan2025
+channels:
+  - conda-forge
+  - nvidia
+dependencies:
+  - python=3.11
+  - pip
+  - cuda-nvcc>=12
