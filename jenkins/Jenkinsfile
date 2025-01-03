@@ -29,7 +29,7 @@ pipeline {
               git fetch --tags
               source $HOME/bin/activate
               pip install -U pip
-              pip install .[docs]
+              pip install .
               bash ./scripts/strip_text.sh
               make -C docs html O="-T"
               
