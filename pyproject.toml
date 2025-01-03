@@ -39,13 +39,15 @@ dependencies = [
     'jupyterlab_myst',
     'jupyter',
     'pillow',
-    'dandi',
     'nemos @ git+https://github.com/flatironinstitute/nemos.git@development',
     'click',
     'ipython',
-    'scikit-learn',
-    'pooch',
-    'rich'
+    "scikit-learn",
+    "dandi",
+    "matplotlib>=3.7",
+    "seaborn",
+    "pooch",
+    "fsspec"
 ]
 
 # Configure package discovery for setuptools
