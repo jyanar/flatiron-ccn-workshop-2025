@@ -17,6 +17,7 @@ extensions = [
     'myst_nb',
     'sphinx_copybutton',
     'sphinx_togglebutton',
+    'sphinx_design',
 ]
 
 templates_path = []

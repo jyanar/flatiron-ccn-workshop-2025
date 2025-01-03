@@ -1,5 +1,10 @@
-# CCN Software Workshop, Jan 2025
+---
+sd_hide_title: true
+---
 
+# Welcome!
+
+# CCN Software Workshop, Jan 2025
 
 ## Binder
 
@@ -10,3 +15,17 @@ Some usage notes:
 - This is important because if you restart the image, **you will lose all data and progress**.
 - The binder will be shutdown automatically after 1 day of inactivity or 7 days of total usage. Data will not persist after the binder instance shuts down, so **please download any notebooks** you want to keep.
 - I will destroy this instance in 2 weeks. You can download your notebooks to keep them after the fact.
+
+```{toctree}
+:glob:
+:caption: Day 1
+:maxdepth: 1
+full/day1/*
+```
+
+```{toctree}
+:glob:
+:caption: Day 2
+:maxdepth: 1
+full/day2/*
+```
