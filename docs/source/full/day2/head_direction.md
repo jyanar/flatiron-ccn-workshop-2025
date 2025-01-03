@@ -701,25 +701,3 @@ all the coupling filters.
 ```{code-cell} ipython3
 fig = doc_plots.plot_coupling(responses, tuning)
 ```
-
-```{code-cell} ipython3
-:tags: [hide-input]
-
-# save image for thumbnail
-from pathlib import Path
-import os
-
-root = os.environ.get("READTHEDOCS_OUTPUT")
-if root:
-   path = Path(root) / "html/_static/thumbnails/tutorials"
-# if local store in assets
-else:
-   path = Path("../_build/html/_static/thumbnails/tutorials")
- 
-# make sure the folder exists if run from build
-if root or Path("../assets/stylesheets").exists():
-   path.mkdir(parents=True, exist_ok=True)
-
-if path.exists():
-  fig.savefig(path / "plot_02_head_direction.svg")
-```

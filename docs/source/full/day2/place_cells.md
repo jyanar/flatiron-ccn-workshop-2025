@@ -145,28 +145,6 @@ for i, n in enumerate(order):
     plt.yticks([])
 ```
 
-```{code-cell} ipython3
-:tags: [hide-input]
-
-# save image for thumbnail
-from pathlib import Path
-import os
-
-root = os.environ.get("READTHEDOCS_OUTPUT")
-if root:
-   path = Path(root) / "html/_static/thumbnails/tutorials"
-# if local store in assets
-else:
-   path = Path("../_build/html/_static/thumbnails/tutorials")
- 
-# make sure the folder exists if run from build
-if root or Path("../assets/stylesheets").exists():
-   path.mkdir(parents=True, exist_ok=True)
-
-if path.exists():
-  fig.savefig(path / "plot_05_place_cells.svg")
-```
-
 ## Phase precession
 
 In addition to place modulation, place cells are also modulated by the theta oscillation. The phase at which neurons fire is dependant of the position. This phenomen is called "phase precession" (see [J. O’Keefe, M. L. Recce, "Phase relationship between hippocampal place units and the EEG theta rhythm." Hippocampus 3, 317–330 (1993).](https://doi.org/10.1002/hipo.450030307)).

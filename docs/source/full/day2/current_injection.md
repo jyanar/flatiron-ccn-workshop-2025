@@ -56,7 +56,7 @@ the experimentalists injected three pulses of current. The current is a square
 pulse multiplied by a sinusoid of a fixed frequency, with some random noise
 riding on top.
 
-![Allen Brain Atlas view of the data we will analyze.](../assets/allen_data.png)
+![Allen Brain Atlas view of the data we will analyze.](../../_static/allen_data.png)
 
 In the figure above (from the Allen Brain Atlas website), we see the
 approximately 22 second sweep, with the input current plotted in the first row,
@@ -147,7 +147,7 @@ The dataset contains several different pynapple objects, which we will
 explore throughout this demo. The following illustrates how these fields relate to the data
 we visualized above:
 
-![Annotated view of the data we will analyze.](../assets/allen_data_annotated.gif)
+![Annotated view of the data we will analyze.](../../_static/allen_data_annotated.gif)
 <!-- this gif created with the following imagemagick command: convert -layers OptimizePlus -delay 100 allen_data_annotated-units.svg allen_data_annotated-epochs.svg allen_data_annotated-stimulus.svg allen_data_annotated-response.svg -loop 0 allen_data_annotated.gif -->
 
 - `units`: dictionary of neurons, holding each neuron's spike timestamps.
@@ -619,28 +619,6 @@ fig = doc_plots.current_injection_plot(current, spikes, firing_rate,
                                  # been smoothed the same way as the
                                  # smoothed spike train
                                  predicted_firing_rate=smooth_predicted_fr)
-```
-
-```{code-cell} ipython3
-:tags: [hide-input]
-
-# save image for thumbnail
-import os
-from pathlib import Path
-
-root = os.environ.get("READTHEDOCS_OUTPUT")
-if root:
-   path = Path(root) / "html/_static/thumbnails/tutorials"
-# if local store in assets
-else:
-   path = Path("../_build/html/_static/thumbnails/tutorials")
- 
-# make sure the folder exists if run from build
-if root or Path("../assets/stylesheets").exists():
-   path.mkdir(parents=True, exist_ok=True)
-
-if path.exists():
-  fig.savefig(path / "plot_01_current_injection.svg")
 ```
 
 What do we see above? Note that the y-axes in the final row are different for
