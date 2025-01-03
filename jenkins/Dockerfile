@@ -11,4 +11,5 @@ RUN apt-get update && \
       && \
     apt-get autoremove --purge -y && \
     apt-get autoclean -y && \
-    rm -rf /var/cache/apt/* /var/lib/apt/lists/*
+    rm -rf /var/cache/apt/* /var/lib/apt/lists/* && \
+    pip install -U pip && pip install .
