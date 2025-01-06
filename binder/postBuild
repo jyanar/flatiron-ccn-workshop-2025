@@ -8,4 +8,4 @@ conda clean --all -y
 NEMOS_DATA_DIR=/home/jovyan/data python ccn-software-jan-2025/scripts/setup.py
 mkdir -p notebooks
 cp -r ccn-software-jan-2025/notebooks/day* ./notebooks/
-sed -i 's|../../docs/source/_static/|../../ccn-software-jan-2025/docs/source/_static/|g' notebooks/*ipynb
+sed -i 's|../../docs/source/_static/|../../ccn-software-jan-2025/docs/source/_static/|g' notebooks/**ipynb
