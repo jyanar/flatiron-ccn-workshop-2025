@@ -64,7 +64,7 @@ html_theme_options = {
         },
         {
             "name": "Binder",
-            "url": "https://binder.flatironinstitute.org/v2/user/wbroderick/cshl2024?filepath=introduction-stripped.ipynb",
+            "url": "https://binder.flatironinstitute.org/v2/user/wbroderick/jan2025",
             "type": "url",
             "icon": "https://mybinder.org/badge_logo.svg",
         },
