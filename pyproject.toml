@@ -48,7 +48,8 @@ dependencies = [
     "matplotlib>=3.7",
     "seaborn",
     "pooch",
-    "fsspec"
+    "fsspec",
+    "numba>=0.60",
 ]
 
 # Configure package discovery for setuptools
