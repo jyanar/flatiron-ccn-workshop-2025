@@ -9,6 +9,10 @@ import pathlib
 import sys
 import subprocess
 import warnings
+import os
+
+repo_dir = pathlib.Path(__file__).parent.parent
+os.environ["NEMOS_DATA_DIR"] = os.environ.get("NEMOS_DATA_DIR", str(repo_dir / "data"))
 
 errors = 0
 
@@ -84,7 +88,9 @@ else:
     from nemos.fetch.fetch_data import _create_retriever
     retriever = _create_retriever()
     for f in workshop_utils.DOWNLOADABLE_FILES:
-        if not retriever.is_available(f):
+        # as far as I could find, retriever doesn't have a "check if file is downloaded"
+        # function. (is_available just checks the *url* is available)
+        if not (retriever.abspath / f).exists():
             missing_files.append(f)
     if len(missing_files) > 0:
         errors += 1

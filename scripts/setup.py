@@ -14,7 +14,10 @@ def main():
     nb_dir = repo_dir / 'notebooks'
     scripts_dir = repo_dir / 'scripts'
     src_dir = repo_dir / 'src'
-    subprocess.run(['python', src_dir / 'workshop_utils' / 'fetch.py'], cwd=repo_dir)
+    env = os.environ.copy()
+    env['NEMOS_DATA_DIR'] = env.get("NEMOS_DATA_DIR", repo_dir / "data")
+    subprocess.run(['python', src_dir / 'workshop_utils' / 'fetch.py'], cwd=repo_dir,
+                   env=env)
     docs_nb_dir = repo_dir / 'docs' / 'source' / 'full'
     for f in docs_nb_dir.glob('**/*md'):
         output_f = (nb_dir / f.parent.name / f.name.replace('md', 'ipynb')).absolute()
