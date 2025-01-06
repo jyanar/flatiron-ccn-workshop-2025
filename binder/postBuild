@@ -5,7 +5,7 @@ conda activate jan2025
 conda clean --all -y
 # because of symlinks and being in the container, this is where the Binder
 # instance thinks the data should go.
-# NEMOS_DATA_DIR=/home/jovyan/data python ccn-software-fens-2024/scripts/setup.py
-# mkdir -p notebooks
-# cp ccn-software-fens-2024/notebooks/0*ipynb ./notebooks/
-# sed -i 's|../docs/assets/|../ccn-software-fens-2024/docs/assets/|g' notebooks/*ipynb
+NEMOS_DATA_DIR=/home/jovyan/data python ccn-software-jan-2025/scripts/setup.py
+mkdir -p notebooks
+cp -r ccn-software-jan-2025/notebooks/day* ./notebooks/
+sed -i 's|../../docs/source/_static/|../../ccn-software-jan-2025/docs/source/_static/|g' notebooks/*ipynb
