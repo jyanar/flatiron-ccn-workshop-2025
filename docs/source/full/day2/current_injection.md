@@ -4,9 +4,9 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.16.4
+    jupytext_version: 1.16.6
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
   language: python
   name: python3
 ---
@@ -124,10 +124,8 @@ to download the data, and a progress bar will show the download's progress.
 On subsequent runs, the cell gets skipped: we do not need to redownload the
 data.
 
-
 ```{code-cell} ipython3
 path = nmo.fetch.fetch_data("allen_478498617.nwb")
-print(path)
 ```
 
 ## Pynapple
@@ -136,7 +134,6 @@ print(path)
 
 Now that we've downloaded the data, let's open it with pynapple and examine
 its contents.
-
 
 ```{code-cell} ipython3
 data = nap.load_file(path)
@@ -160,7 +157,6 @@ we visualized above:
 
 Now let's go through the relevant variables in some more detail:
 
-
 ```{code-cell} ipython3
 trial_interval_set = data["epochs"]
 
@@ -170,7 +166,6 @@ spikes = data["units"]
 
 First, let's examine `trial_interval_set`:
 
-
 ```{code-cell} ipython3
 trial_interval_set.keys()
 ```
@@ -179,7 +174,6 @@ trial_interval_set.keys()
 [`IntervalSets`](https://pynapple.org/generated/pynapple.core.interval_set.IntervalSet.html)
 for values. Each key defines the stimulus protocol, with the value defining
 the beginning and end of that stimulation protocol.
-
 
 ```{code-cell} ipython3
 noise_interval = trial_interval_set["Noise 1"]
@@ -191,14 +185,12 @@ three rows, each defining a separate sweep. We'll just grab the first sweep
 (shown in blue in the pictures above) and ignore the other two (shown in
 gray).
 
-
 ```{code-cell} ipython3
 noise_interval = noise_interval[0]
 noise_interval
 ```
 
 Now let's examine `current`:
-
 
 ```{code-cell} ipython3
 current
@@ -215,7 +207,6 @@ discussed above, we only want one of the "Noise 1" sweeps. Fortunately,
 `pynapple` makes it easy to grab out the relevant time points by making use
 of the `noise_interval` we defined above:
 
-
 ```{code-cell} ipython3
 current = current.restrict(noise_interval)
 # convert current from Ampere to pico-amperes, to match the above visualization
@@ -231,7 +222,6 @@ Finally, let's examine the spike times. `spikes` is a
 a dictionary-like object that holds multiple `Ts` (timeseries) objects with
 potentially different time indices:
 
-
 ```{code-cell} ipython3
 spikes
 ```
@@ -243,7 +233,6 @@ there's only one row.
 We can index into the `TsGroup` to see the timestamps for this neuron's
 spikes:
 
-
 ```{code-cell} ipython3
 spikes[0]
 ```
@@ -251,7 +240,6 @@ spikes[0]
 Similar to `current`, this object originally contains data from the entire
 experiment. To get only the data we need, we again use
 `restrict(noise_interval)`:
-
 
 ```{code-cell} ipython3
 spikes = spikes.restrict(noise_interval)
@@ -261,7 +249,6 @@ spikes[0]
 
 Now, let's visualize the data from this trial, replicating rows 1 and 3
 from the Allen Brain Atlas figure at the beginning of this notebook:
-
 
 ```{code-cell} ipython3
 fig, ax = plt.subplots(1, 1, figsize=(8, 2))
@@ -316,7 +303,6 @@ interesting and would like a model to capture.
 
 First, we must convert from our spike times to binned spikes:
 
-
 ```{code-cell} ipython3
 # bin size in seconds
 bin_size = 0.001
@@ -329,7 +315,6 @@ Now, let's convert the binned spikes into the firing rate, by smoothing them
 with a gaussian kernel. Pynapple again provides a convenience function for
 this:
 
-
 ```{code-cell} ipython3
 # the inputs to this function are the standard deviation of the gaussian in seconds and
 # the full width of the window, in standard deviations. So std=.05 and size_factor=20
@@ -340,8 +325,6 @@ firing_rate = firing_rate / bin_size
 ```
 
 Note that firing_rate is a [`TsdFrame`](https://pynapple.org/generated/pynapple.core.time_series.TsdFrame.html)!
-
-
 
 ```{code-cell} ipython3
 print(type(firing_rate))
@@ -403,7 +386,6 @@ tuning_curve
 neuron in this case) and each row is a bin over the feature (here, the input
 current). We can easily plot the tuning curve of the neuron:
 
-
 ```{code-cell} ipython3
 doc_plots.tuning_curve_plot(tuning_curve);
 ```
@@ -461,7 +443,6 @@ spike counts to the proper resolution using the
 [`bin_average`](https://pynapple.org/generated/pynapple.core.time_series.Tsd.bin_average.html#pynapple.core.time_series.Tsd.bin_average)
 method from pynapple:
 
-
 ```{code-cell} ipython3
 binned_current = current.bin_average(bin_size)
 
@@ -481,7 +462,6 @@ Secondly, we have to reshape our variables so that they are the proper shape:
 Because we only have a single predictor feature, we'll use
 [`np.expand_dims`](https://numpy.org/doc/stable/reference/generated/numpy.expand_dims.html)
 to ensure it is a 2d array.
-
 
 ```{code-cell} ipython3
 predictor = np.expand_dims(binned_current, 1)
@@ -559,7 +539,6 @@ often less sensitive to step-size. Try other solvers to see how they
 behave!
 :::
 
-
 ```{code-cell} ipython3
 # Initialize the model w/regularizer and solver
 model = nmo.glm.GLM(solver_name="LBFGS")
@@ -570,7 +549,6 @@ fit our data! In the previous section, we prepared our model matrix
 (`predictor`) and target data (`count`), so to fit the model we just need to
 pass them to the model:
 
-
 ```{code-cell} ipython3
 model.fit(predictor, count)
 ```
@@ -579,14 +557,12 @@ Now that we've fit our data, we can retrieve the resulting parameters.
 Similar to scikit-learn, these are stored as the `coef_` and `intercept_`
 attributes:
 
-
 ```{code-cell} ipython3
 print(f"firing_rate(t) = exp({model.coef_} * current(t) + {model.intercept_})")
 ```
 
 Note that `model.coef_` has shape `(n_features, )`, while `model.intercept_`
 is a scalar:
-
 
 ```{code-cell} ipython3
 print(f"coef_ shape: {model.coef_.shape}")
@@ -600,7 +576,6 @@ First, we can use the model to predict the firing rates and compare that to
 the smoothed spike train. By calling [`predict()`](nemos.glm.GLM.predict) we can get the model's
 predicted firing rate for this data. Note that this is just the output of the
 model's linear-nonlinear step, as described earlier!
-
 
 ```{code-cell} ipython3
 # mkdocs_gallery_thumbnail_number = 4
@@ -644,7 +619,6 @@ going on?
 To get a better sense, let's look at the mean firing rate over the whole
 period:
 
-
 ```{code-cell} ipython3
 # compare observed mean firing rate with the model predicted one
 print(f"Observed mean firing rate: {np.mean(count) / bin_size} Hz")
@@ -658,7 +632,6 @@ inputs and undershot in the middle.
 We can see this more directly by computing the tuning curve for our predicted
 firing rate and comparing that against our smoothed spike train from the
 beginning of this notebook. Pynapple can help us again with this:
-
 
 ```{code-cell} ipython3
 tuning_curve_model = nap.compute_1d_tuning_curves_continuous(predicted_fr[:, np.newaxis], current, 15)
@@ -684,7 +657,6 @@ model, but the firing rate is just the output of *LN*, its first two steps.
 The firing rate is just the mean of a Poisson process, so we can pass it to
 `jax.random.poisson`:
 
-
 ```{code-cell} ipython3
 spikes = jax.random.poisson(jax.random.PRNGKey(123), predicted_fr.values)
 ```
@@ -702,7 +674,6 @@ Finally, you may want a number with which to evaluate your model's
 performance. As discussed earlier, the model optimizes log-likelihood to find
 the best-fitting weights, and we can calculate this number using its [`score`](nemos.glm.GLM.score)
 method:
-
 
 ```{code-cell} ipython3
 log_likelihood = model.score(predictor, count, score_type="log-likelihood")
@@ -726,7 +697,6 @@ Because it's un-normalized, however, the log-likelihood should not be
 compared across datasets (because e.g., it won't account for difference in
 noise levels). We provide the ability to compute the pseudo-$R^2$ for this
 purpose:
-
 
 ```{code-cell} ipython3
 model.score(predictor, count, score_type='pseudo-r2-Cohen')

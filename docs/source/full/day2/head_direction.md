@@ -72,7 +72,6 @@ Here we load the data from OSF. The data is a NWB file.
 
 ```{code-cell} ipython3
 path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
-print(path)
 ```
 
 ## Pynapple
