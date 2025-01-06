@@ -39,7 +39,7 @@ Before the workshop, please try to complete the following steps. If you are unab
 
 If `check_setup.py` tells you setup was successful, then you're good to go. Otherwise, please come to the installation help session on Wednesday, so everyone is ready to get started Thursday morning.
 
-After doing the above, the `notebooks/` directory within your local copy of the `ccn-software-jan-2025` repository will contain the jupyter notebooks for the workshop.
+After doing the above, the `data/` and `notebooks/` directories within your local copy of the `ccn-software-jan-2025` repository will contain the NWB files and jupyter notebooks for the workshop.
 
 We will work through the notebooks in the order they're listed on this website.
 
