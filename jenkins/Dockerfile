@@ -11,5 +11,8 @@ RUN apt-get update && \
       && \
     apt-get autoremove --purge -y && \
     apt-get autoclean -y && \
-    rm -rf /var/cache/apt/* /var/lib/apt/lists/* && \
-    pip install -U pip && pip install .
+    rm -rf /var/cache/apt/* /var/lib/apt/lists/*
+
+RUN python3.11 -m venv --system-site-packages /venv
+COPY . /ccn-software-jan-2025/
+RUN . /venv/bin/activate && pip install /ccn-software-jan-2025/
