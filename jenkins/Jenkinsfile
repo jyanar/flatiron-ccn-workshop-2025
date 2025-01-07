@@ -50,6 +50,7 @@ pipeline {
                 else
                    out_dir="branch/\$BRANCH_NAME"
                 fi
+                mkdir -p workshops/\$PROJECT_NAME/
                 echo \$GITHUB_PATH > workshops/\$PROJECT_NAME/.gh_path
                 DOCS_DIR=workshops/\$PROJECT_NAME/\$out_dir
                 rm -rf \$DOCS_DIR
