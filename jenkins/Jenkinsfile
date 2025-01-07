@@ -30,7 +30,7 @@ pipeline {
               source $HOME/bin/activate
               pip install -U pip
               pip install .
-              bash ./scripts/strip_text.sh
+              python src/workshop_utils/fetch.py
               make -C docs html O="-T"
               
               # we move this to a separate directory to reduce the risk of the checkout
