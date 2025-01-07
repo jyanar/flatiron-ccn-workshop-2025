@@ -18,7 +18,7 @@ pipeline {
         OMP_NUM_THREADS = 4
         PROJECT_NAME = "jan-2025"
         GITHUB_PATH = "flatironinstitute/ccn-software-jan-2025"
-        GITHUB_TOKEN = credentials("neurorse-workshop-jan25-github-pr-write")
+        GITHUB_TOKEN = credentials("plenoptic-github-pr-write")
         BRANCH_NAME = "${env.BRANCH_NAME}"
         ISSUE_NUM = "${env.BRANCH_NAME.replace('PR-', '')}"
       }
@@ -27,9 +27,10 @@ pipeline {
         sh '''#!/bin/bash -ex
               # make sure we have the git tags, since we need them to correctly version output
               git fetch --tags
-              source /venv/bin/activate
-              pip install -U .
-              bash ./scripts/strip_text.sh
+              source $HOME/bin/activate
+              pip install -U pip
+              pip install .
+              python src/workshop_utils/fetch.py
               make -C docs html O="-T"
               
               # we move this to a separate directory to reduce the risk of the checkout
@@ -92,8 +93,8 @@ pipeline {
   }
   post {
     failure {
-      emailext subject: '$GITHUB_PATH - Build #$BUILD_NUMBER - $BUILD_STATUS',
-        body: '''$GITHUB_PATH - Build #$BUILD_NUMBER - $BUILD_STATUS
+      emailext subject: '$PROJECT_NAME - Build #$BUILD_NUMBER - $BUILD_STATUS',
+        body: '''$PROJECT_NAME - Build #$BUILD_NUMBER - $BUILD_STATUS
 
 Check console output at $BUILD_URL to view full results.
 
