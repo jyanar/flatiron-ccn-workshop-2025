@@ -18,7 +18,7 @@ pipeline {
         OMP_NUM_THREADS = 4
         PROJECT_NAME = "jan-2025"
         GITHUB_PATH = "flatironinstitute/ccn-software-jan-2025"
-        GITHUB_TOKEN = credentials("neurorse-workshop-jan25-github-pr-write")
+        GITHUB_TOKEN = credentials("plenoptic-github-pr-write")
         BRANCH_NAME = "${env.BRANCH_NAME}"
         ISSUE_NUM = "${env.BRANCH_NAME.replace('PR-', '')}"
       }
