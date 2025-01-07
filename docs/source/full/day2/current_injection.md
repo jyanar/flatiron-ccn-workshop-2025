@@ -69,12 +69,9 @@ of this notebook, we'll use only the input current and the recorded spikes
 displayed in the first and third rows.
 
 First, let us see how to load in the data and reproduce the above figure, which
-we'll do using the [Pynapple package](https://pynapple-org.github.io/pynapple/). We will rely on 
-pynapple throughout this notebook, as it simplifies handling this type of
-data (we will explain the essentials of pynapple as they are used, but see the 
-[Pynapple docs](https://pynapple-org.github.io/pynapple/)
-if you are interested in learning more). After we've explored the data some, we'll introduce the Generalized
-Linear Model and how to fit it with NeMoS.
+we'll do using [pynapple](https://pynapple.org). This will largely be a
+review of what we went through yesterday. After we've explored the data some, we'll
+introduce the Generalized Linear Model and how to fit it with NeMoS.
 
 ## Learning objectives 
 
@@ -324,7 +321,7 @@ firing_rate = count.smooth(std=0.05, size_factor=20)
 firing_rate = firing_rate / bin_size
 ```
 
-Note that firing_rate is a [`TsdFrame`](https://pynapple.org/generated/pynapple.core.time_series.TsdFrame.html)!
+Note that firing_rate is a [`Tsd`](https://pynapple.org/generated/pynapple.core.time_series.Tsd.html)!
 
 ```{code-cell} ipython3
 print(type(firing_rate))
@@ -356,9 +353,9 @@ what do we see?
   in the input as well, so this pattern in the response might be reflecting
   that.
 
-- There's some decay in firing rate as the input remains on: there are three
+- There's some decay in firing rate as the input remains on: there are three or
   four "bumps" of neuronal firing in the second and third intervals and they
-  decrease in amplitude, with first being the largest.
+  decrease in amplitude, with the first being the largest.
 
 These give us some good phenomena to try and predict! But there's something
 that's not quite obvious from the above plot: what is the relationship
@@ -395,20 +392,19 @@ it's definitely not a linear relationship, and it might start decreasing as
 the current gets too large.
 
 So this gives us three interesting phenomena we'd like our model to help
-explain: the tuning curve between the firing rate and the current, the firing
-rate's periodicity, and the gradual reduction in firing rate while the
-current remains on.
+explain: 
 
-
+- the tuning curve between the firing rate and the current.
+- the firing rate's periodicity.
+- the gradual reduction in firing rate while the current remains on.
 
 
 ## NeMoS 
 
 ### Preparing data
 
-Now that we understand our model, we're almost ready to put it together.
-Before we construct it, however, we need to get the data into the right
-format.
+Now that we understand our data, we're almost ready to put the model together.
+Before we construct it, however, we need to get the data into the right format.
 
 NeMoS requires that the predictors and spike counts it operates on have the
 following properties:
@@ -476,14 +472,20 @@ print(f"count shape: {count.shape}")
 
 In this example, we're only fitting data for a single neuron, but you
 might wonder how the data should be shaped if you have more than one
-neuron -- do you add an extra dimension? or concatenate neurons along one
-of the existing dimensions?
+neuron.
 
-In NeMoS, we always fit Generalized Linear Models to a single neuron at a
-time. We'll discuss this more in the [following
-tutorial](plot_02_head_direction.md), but briefly: you get the same answer
-whether you fit the neurons separately or simultaneously, and fitting
-them separately can make your life easier.
+We will discuss this in more detail in the [following
+tutorial](plot_02_head_direction.md), but briefly: NeMoS has a separate
+[`PopulationGLM`](nemos.glm.PopulationGLM) object for fitting a population of
+neurons. It operates very similarly to the `GLM` object we use here: it still
+expects a 2d input, with neurons concatenated along the second dimension. (NeMoS
+provides some helper functions for splitting the design matrix and model
+parameter arrays to make them more interpretable.)
+
+Note that fitting each neuron separately is equivalent to fitting the entire
+population at once. Fitting them separately can make your life easier by e.g.,
+allowing you to parallelize more easily.
+
 :::
 
 ### Fitting the model
@@ -499,31 +501,38 @@ and then the user calls the `.fit()` function to fit the model to data.
 We will walk you through the process below by example, but if you
 are interested in reading more details see the [Getting Started with scikit-learn](https://scikit-learn.org/stable/getting_started.html) webpage.
 
-To initialize our model, we need to specify the regularizer and observation
-model objects, both of which should be one of our custom objects:
+To initialize our model, we need to specify the solver, the regularizer, and the observation
+model. All of these are optional.
 
-- Regularizer: this object specifies both the solver algorithm and the
-  regularization scheme. They are jointly specified because each
-  regularization scheme has a list of compatible solvers to choose between.
-  Regularization modifies the objective function to reflect your prior
-  beliefs about the parameters, such as sparsity. Regularization becomes more
-  important as the number of input features, and thus model parameters,
-  grows. They can be found within [`nemos.regularizer`](regularizers).
+- `solver_name`: this string specifies the solver algorithm. The default
+  behavior depends on the regularizer, as each regularization scheme is only
+  compatible with a subset of possible solvers. View the [GLM
+  docstring](https://nemos--264.org.readthedocs.build/en/264/generated/glm/nemos.glm.GLM.html#nemos.glm.GLM)
+  for more details.
 
 :::{warning}
 
 With a convex problem like the GLM, in theory it does not matter which
 solver algorithm you use. In practice, due to numerical issues, it
 generally does. Thus, it's worth trying a couple to see how their
-solutions compare. (Different regularization schemes will always give
-different results.)
+solutions compare.
 :::
 
-- Observation model: this object links the firing rate and the observed
-  data (in this case spikes), describing the distribution of neural activity (and thus changing
-  the log-likelihood). For spiking data, we use the Poisson observation model, but
-  we discuss other options for continuous data
-  in [the calcium imaging analysis demo](plot_06_calcium_imaging.md).
+- `regularizer`: this string or object specifies the regularization scheme.
+  Regularization modifies the objective function to reflect your prior beliefs
+  about the parameters, such as sparsity. Regularization becomes more important
+  as the number of input features, and thus model parameters, grows. NeMoS's
+  solvers can be found within the [`nemos.regularizer`
+  module](https://nemos--264.org.readthedocs.build/en/264/api_reference.html#the-nemos-regularizer-module).
+  If you pass a string matching the name of one of our solvers, we initialize
+  the solver with the default arguments. If you need more control, you will need
+  to initialize and pass the object yourself.
+
+- `observation_model`: this object links the firing rate and the observed data
+  (in this case spikes), describing the distribution of neural activity (and
+  thus changing the log-likelihood). For spiking data, we use the Poisson
+  observation model, but we discuss other options for continuous data in our
+  [documentation](https://nemos--264.org.readthedocs.build/en/264/tutorials/plot_06_calcium_imaging.html).
 
 For this example, we'll use an un-regularized LBFGS solver. We'll discuss
 regularization in a later tutorial.
@@ -540,7 +549,8 @@ behave!
 :::
 
 ```{code-cell} ipython3
-# Initialize the model w/regularizer and solver
+# Initialize the model, specifying the solver. Since unregularized is the 
+# default choice, we don't need to specify it.
 model = nmo.glm.GLM(solver_name="LBFGS")
 ```
 
@@ -561,8 +571,9 @@ attributes:
 print(f"firing_rate(t) = exp({model.coef_} * current(t) + {model.intercept_})")
 ```
 
-Note that `model.coef_` has shape `(n_features, )`, while `model.intercept_`
-is a scalar:
+Note that `model.coef_` has shape `(n_features, )`, while `model.intercept_` has
+shape `(n_neurons)` (for the `GLM` object, this will always be 1, but it will
+differ for the `PopulationGLM` object!):
 
 ```{code-cell} ipython3
 print(f"coef_ shape: {model.coef_.shape}")
@@ -578,8 +589,6 @@ predicted firing rate for this data. Note that this is just the output of the
 model's linear-nonlinear step, as described earlier!
 
 ```{code-cell} ipython3
-# mkdocs_gallery_thumbnail_number = 4
-
 predicted_fr = model.predict(predictor)
 # convert units from spikes/bin to spikes/sec
 predicted_fr = predicted_fr / bin_size
@@ -634,6 +643,8 @@ firing rate and comparing that against our smoothed spike train from the
 beginning of this notebook. Pynapple can help us again with this:
 
 ```{code-cell} ipython3
+# pynapple expects the input to this function to be 2d,
+# so let's add a singleton dimension
 tuning_curve_model = nap.compute_1d_tuning_curves_continuous(predicted_fr[:, np.newaxis], current, 15)
 fig = doc_plots.tuning_curve_plot(tuning_curve)
 fig.axes[0].plot(tuning_curve_model, color="tomato", label="glm")
@@ -643,7 +654,7 @@ fig.axes[0].legend()
 In addition to making that mismatch discussed earlier a little more obvious,
 this tuning curve comparison also highlights that this model thinks the
 firing rate will continue to grow as the injected current increases, which is
-not reflected in the data.
+not reflected in the data (or in our knowledge of how neurons work!).
 
 Viewing this plot also makes it clear that the model's tuning curve is
 approximately exponential. We already knew that! That's what it means to be a
@@ -664,11 +675,11 @@ spikes = jax.random.poisson(jax.random.PRNGKey(123), predicted_fr.values)
 Note that this is not actually that informative and, in general, it is
 recommended that you focus on firing rates when interpreting your model.
 
-Also, while
-including spike history is often helpful, it can sometimes make simulations unstable:
-if your GLM includes auto-regressive inputs (e.g., neurons are
-connected to themselves or each other), simulations can sometimes can behave
-poorly because of runaway excitation [$^{[1, 2]}$](#ref-1).
+Also, while including spike history is often helpful, it can sometimes make
+simulating spikes like this unstable: if your GLM includes auto-regressive
+inputs (e.g., neurons are connected to themselves or each other), simulations
+can sometimes can behave poorly because of runaway excitation [$^{[1,
+2]}$](#ref-1).
 
 Finally, you may want a number with which to evaluate your model's
 performance. As discussed earlier, the model optimizes log-likelihood to find
