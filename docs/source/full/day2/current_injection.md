@@ -167,7 +167,7 @@ spikes = data["units"]
 First, let's examine `trial_interval_set`:
 
 ```{code-cell} ipython3
-trial_interval_set.keys()
+trial_interval_set # .keys()
 ```
 
 `trial_interval_set` is a dictionary with strings for keys and
@@ -176,7 +176,7 @@ for values. Each key defines the stimulus protocol, with the value defining
 the beginning and end of that stimulation protocol.
 
 ```{code-cell} ipython3
-noise_interval = trial_interval_set["Noise 1"]
+noise_interval = trial_interval_set[trial_interval_set.tags == "Noise 1"]
 noise_interval
 ```
 
