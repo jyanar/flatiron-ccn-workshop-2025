@@ -27,8 +27,9 @@ pipeline {
         sh '''#!/bin/bash -ex
               # make sure we have the git tags, since we need them to correctly version output
               git fetch --tags
-              source /venv/bin/activate
-              pip install -U --user .
+              source $HOME/bin/activate
+              pip install -U pip
+              pip install .
               bash ./scripts/strip_text.sh
               make -C docs html O="-T"
               
