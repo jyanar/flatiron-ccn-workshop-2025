@@ -172,7 +172,7 @@ trial_interval_set
 with a metadata columns (`tags`) defining the stimulus protocol.
 
 ```{code-cell} ipython3
-noise_interval = trial_interval_set[trial_interval_set.tags=="Noise 1"]
+noise_interval = trial_interval_set[trial_interval_set.tags == "Noise 1"]
 noise_interval
 ```
 
