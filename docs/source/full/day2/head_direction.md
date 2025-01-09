@@ -585,13 +585,14 @@ Extract the weights and store it in a `(n_neurons, n_neurons, n_basis_funcs)` ar
 You can use the `split_by_feature` method of `basis` for this. 
 
 ```{code-cell} ipython3
+print(f"GLM coeff: {model.coef_.shape}")
 # split the coefficient vector along the feature axis (axis=0)
 weights_dict = basis.split_by_feature(model.coef_, axis=0)
 
 # the output is a dict with key the basis label, 
 # and value the reshaped coefficients
 weights = weights_dict["RaisedCosineLogConv"]
-weights.shape
+print(f"Re-shaped coeff: {weights.shape}")
 ```
 
 Multiply the weights by the basis, to get the history filters.
