@@ -4,9 +4,9 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.16.4
+    jupytext_version: 1.16.6
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
   language: python
   name: python3
 ---
@@ -108,7 +108,7 @@ angle = data["ry"]
 This cell will restrict the data to what we care about i.e. the activity of head-direction neurons during wakefulness.
 
 ```{code-cell} ipython3
-spikes = spikes.getby_category("location")["adn"]
+spikes = spikes[spikes.location == "adn"]
 
 spikes = spikes.restrict(wake_ep).getby_threshold("rate", 1.0)
 angle = angle.restrict(wake_ep)
@@ -223,20 +223,17 @@ One may think of padding the window (with zeros for example) but this may genera
 To avoid that, we can simply restrict our analysis to times $t$ larger than the window and NaN-pad earlier
 time-points;
 
-A fast way to compute this feature matrix is convolving the counts with the identity matrix.
-We can apply the convolution and NaN-padding in a single step using the
-[`nemos.convolve.create_convolutional_predictor`](nemos.convolve.create_convolutional_predictor)
-function.
+You can construct this feature matrix with the [`HistoryConv`](https://nemos--282.org.readthedocs.build/en/282/generated/basis/nemos.basis.HistoryConv.html#nemos.basis.HistoryConv) basis.
 
 ```{code-cell} ipython3
 # convert the prediction window to bins (by multiplying with the sampling rate)
 window_size = int(window_size_sec * neuron_count.rate)
 
-# convolve the counts with the identity matrix.
-plt.close("all")
-input_feature = nmo.convolve.create_convolutional_predictor(
-    np.eye(window_size), neuron_count
-)
+# define the history bases
+history_basis = nmo.basis.HistoryConv(window_size)
+
+# create the feature matrix
+input_feature = history_basis.compute_features(neuron_count)
 
 # print the NaN indices along the time axis
 print("NaN indices:\n", np.where(np.isnan(input_feature[:, 0]))[0])
@@ -259,7 +256,7 @@ neuron_id = 0
 workshop_utils.plot_features(input_feature, count.rate, suptitle);
 ```
 
-As you may see, the time axis is backward, this happens because convolution flips the time axis.
+As you may see, the time axis is backward, this happens because under the hood, the basis is using the convolution operator which flips the time axis.
 This is equivalent, as we can interpret the result as how much a spike will affect the future rate.
 In the previous tutorial our feature was 1-dimensional (just the current), now
 instead the feature dimension is 80, because our bin size was 0.01 sec and the window size is 0.8 sec.
@@ -351,24 +348,9 @@ What can we do to mitigate over-fitting now?
 
 (head_direction_reducing_dimensionality)=
 #### Reducing feature dimensionality
-One way to proceed is to find a lower-dimensional representation of the response
-by parametrizing the decay effect. For instance, we could try to model it
-with an exponentially decaying function $f(t) = \exp( - \alpha t)$, with
-$\alpha >0$ a positive scalar. This is not a bad idea, because we would greatly
-simplify the dimensionality our features (from 80 to 1). Unfortunately,
-there is no way to know a-priori what is a good parameterization. More
-importantly, not all the parametrizations guarantee a unique and stable solution
-to the maximum likelihood estimation of the coefficients (convexity).
-
-In the GLM framework, the main way to construct a lower dimensional parametrization
-while preserving convexity, is to use a set of basis functions.
-For history-type inputs, whether of the spiking history or of the current
-history, we'll use the raised cosine log-stretched basis first described in
-[Pillow et al., 2005](https://www.jneurosci.org/content/25/47/11003). This
-basis set has the nice property that their precision drops linearly with
-distance from event, which is a makes sense for many history-related inputs
-in neuroscience: whether an input happened 1 or 5 msec ago matters a lot,
-whereas whether an input happened 51 or 55 msec ago is less important.
+Let's see how to use NeMoS' `basis` module to reduce dimensionality and avoid over-fitting!
+For history-type inputs, we'll use again the raised cosine log-stretched basis,
+[Pillow et al., 2005](https://www.jneurosci.org/content/25/47/11003).
 
 ```{code-cell} ipython3
 doc_plots.plot_basis();
@@ -382,14 +364,7 @@ analytical step. We will eventually provide guidance on this choice, but
 for now we'll give you a decent choice.
 :::
 
-NeMoS includes [`Basis`](nemos_basis) objects to handle the construction and use of these
-basis functions.
-
-When we instantiate this object, the only arguments we need to specify is the
-number of functions we want, the mode of operation of the basis (`"conv"`),
-and the window size for the convolution. With more basis functions, we'll be able to
-represent the effect of the corresponding input with the higher precision, at
-the cost of adding additional parameters.
+We can initialize the `RaisedCosineLogConv` by providing the number of basis functions and the window size for the convolution. With more basis functions, we'll be able to represent the effect of the corresponding input with the higher precision, at the cost of adding additional parameters.
 
 ```{code-cell} ipython3
 # a basis object can be instantiated in "conv" mode for convolving  the input.
@@ -408,37 +383,17 @@ print(basis_kernels.shape)
 time *= window_size_sec
 ```
 
-To appreciate why the raised-cosine basis can approximate well our response
-we can learn a "good" set of weight for the basis element such that
-a weighted sum of the basis approximates the GLM weights for the count history.
-One way to do so is by minimizing the least-squares.
-
-```{code-cell} ipython3
-# compute the least-squares weights
-lsq_coef, _, _, _ = np.linalg.lstsq(basis_kernels, np.squeeze(model.coef_), rcond=-1)
-
-# plot the basis and the approximation
-doc_plots.plot_weighted_sum_basis(time, model.coef_, basis_kernels, lsq_coef);
-```
-
-The first plot is the response of each of the 8 basis functions to a single
-pulse. This is known as the impulse response function, and is a useful way to
-characterize linear systems like our basis objects. The second plot are is a
-bar plot representing the least-square coefficients. The third one are the
-impulse responses scaled by the weights. The last plot shows the sum of the
-scaled response overlapped to the original spike count history weights.
-
-Our predictor previously was huge: every possible 80 time point chunk of the
-data, for 1440000 total numbers. By using this basis set we can instead reduce
-the predictor to 8 numbers for every 80 time point window for 144000 total
-numbers. Basically an order of magnitude less. With 1ms bins we would have
+Our spike history predictor was huge: every possible 80 time point chunk of the
+data, for $144 \cdot 10^4$ total numbers. By using this basis set we can instead reduce
+the predictor to 8 numbers for every 80 time point window for $144 \cdot 10^3$ total
+numbers, an order of magnitude less. With 1ms bins we would have
 achieved 2 order of magnitude reduction in input size. This is a huge benefit
 in terms of memory allocation and, computing time. As an additional benefit,
 we will reduce over-fitting.
 
 Let's see our basis in action. We can "compress" spike history feature by convolving the basis
 with the counts (without creating the large spike history feature matrix).
-This can be performed in NeMoS by calling the "compute_features" method of basis.
+This can be performed in NeMoS by calling the `compute_features` method of basis.
 
 ```{code-cell} ipython3
 # equivalent to
@@ -447,14 +402,16 @@ conv_spk = basis.compute_features(neuron_count)
 
 print(f"Raw count history as feature: {input_feature.shape}")
 print(f"Compressed count history as feature: {conv_spk.shape}")
+```
 
+Let’s focus on two small time windows and visualize the features, which result from convolving the counts with the basis elements.
+
+```{code-cell} ipython3
 # Visualize the convolution results
 epoch_one_spk = nap.IntervalSet(8917.5, 8918.5)
 epoch_multi_spk = nap.IntervalSet(8979.2, 8980.2)
 
 doc_plots.plot_convolved_counts(neuron_count, conv_spk, epoch_one_spk, epoch_multi_spk);
-
-# find interval with two spikes to show the accumulation, in a second row
 ```
 
 Now that we have our "compressed" history feature matrix, we can fit the ML parameters for a GLM.
@@ -509,35 +466,21 @@ model_basis_second_half.fit(conv_spk.restrict(second_half), neuron_count.restric
 
 # compute responses for the 2nd half fit
 self_connection_second_half = np.matmul(basis_kernels, np.squeeze(model_basis_second_half.coef_))
+```
 
+And plot the results.
+
+```{code-cell} ipython3
 plt.figure()
 plt.title("Spike History Weights")
-plt.plot(time, np.squeeze(model.coef_), "k", alpha=0.3, label="GLM raw history 1st half")
-plt.plot(time, np.squeeze(model_second_half.coef_), alpha=0.3, color="orange", label="GLM raw history 2nd half")
+plt.plot(time, model.coef_, "k", alpha=0.3, label="GLM raw history 1st half")
+plt.plot(time, model_second_half.coef_, alpha=0.3, color="orange", label="GLM raw history 2nd half")
 plt.plot(time, self_connection, "--k", lw=2, label="GLM basis 1st half")
 plt.plot(time, self_connection_second_half, color="orange", lw=2, ls="--", label="GLM basis 2nd half")
 plt.axhline(0, color="k", lw=0.5)
 plt.xlabel("Time from spike (sec)")
 plt.ylabel("Weight")
 plt.legend()
-```
-
-Or we can score the model predictions using both one half of the set for training
-and the other half for testing.
-
-```{code-cell} ipython3
-# compare model scores, as expected the training score is better with more parameters
-# this may could be over-fitting.
-print(f"full history train score: {model.score(input_feature.restrict(first_half), neuron_count.restrict(first_half), score_type='pseudo-r2-Cohen')}")
-print(f"basis train score: {model_basis.score(conv_spk.restrict(first_half), neuron_count.restrict(first_half), score_type='pseudo-r2-Cohen')}")
-```
-
-To check that, let's try to see ho the model perform on unseen data and obtaining a test
-score.
-
-```{code-cell} ipython3
-print(f"\nfull history test score: {model.score(input_feature.restrict(second_half), neuron_count.restrict(second_half), score_type='pseudo-r2-Cohen')}")
-print(f"basis test score: {model_basis.score(conv_spk.restrict(second_half), neuron_count.restrict(second_half), score_type='pseudo-r2-Cohen')}")
 ```
 
 Let's extract and plot the rates
@@ -562,11 +505,13 @@ to get an array of predictors of shape, `(num_time_points, num_neurons * num_bas
 
 #### Preparing the features
 
++++
+
+Since this time we are convolving more than one neuron, we need to reset the expected input shape. This can be done by passing the population counts to the `set_input_shape` method.
+
 ```{code-cell} ipython3
-# re-initialize basis
-basis = nmo.basis.RaisedCosineLogConv(
-    n_basis_funcs=8, window_size=window_size
-)
+# set the input shape by passing the pop. count
+basis.set_input_shape(count)
 
 # convolve all the neurons
 convolved_count = basis.compute_features(count)
@@ -635,10 +580,18 @@ tuning = nap.compute_1d_tuning_curves_continuous(predicted_firing_rate,
                                                  minmax=(0, 2 * np.pi))
 ```
 
-Extract the weights and store it in a `(n_neurons, n_neurons, n_basis_funcs)` array.
+Extract the weights and store it in a `(n_neurons, n_neurons, n_basis_funcs)` array. 
+
+You can use the `split_by_feature` method of `basis` for this. 
 
 ```{code-cell} ipython3
-weights = model.coef_.reshape(count.shape[1], basis.n_basis_funcs, count.shape[1])
+# split the coefficient vector along the feature axis (axis=0)
+weights_dict = basis.split_by_feature(model.coef_, axis=0)
+
+# the output is a dict with key the basis label, 
+# and value the reshaped coefficients
+weights = weights_dict["RaisedCosineLogConv"]
+weights.shape
 ```
 
 Multiply the weights by the basis, to get the history filters.
@@ -654,4 +607,8 @@ all the coupling filters.
 
 ```{code-cell} ipython3
 fig = doc_plots.plot_coupling(responses, tuning)
+```
+
+```{code-cell} ipython3
+
 ```
