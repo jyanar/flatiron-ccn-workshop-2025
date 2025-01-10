@@ -12,8 +12,7 @@ kernelspec:
 ---
 
 
-Analysing head-direction cells
-============
+# Analysing head-direction cells
 
 This tutorial demonstrates how we use Pynapple to generate Figure 4a in the [publication](https://elifesciences.org/reviewed-preprints/85786).
 The NWB file for the example is hosted on [OSF](https://osf.io/jb2gd). We show below how to stream it.

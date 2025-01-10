@@ -66,3 +66,17 @@ full/day1/*
 :maxdepth: 1
 full/day2/*
 ```
+
+```{toctree}
+:glob:
+:caption: Day 1, for users
+:maxdepth: 1
+users/day1/*
+```
+
+```{toctree}
+:glob:
+:caption: Day 2, for users
+:maxdepth: 1
+users/day2/*
+```

@@ -12,8 +12,7 @@ kernelspec:
 ---
 
 
-Spikes-phase coupling
-=====================
+# Spikes-phase coupling
 
 In this tutorial we will learn how to isolate phase information using band-pass filtering and combine it
 with spiking data, to find phase preferences of spiking units.

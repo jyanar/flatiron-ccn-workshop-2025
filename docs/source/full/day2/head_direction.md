@@ -17,14 +17,12 @@ kernelspec:
 %matplotlib inline
 import warnings
 
-# Ignore the first specific warning
 warnings.filterwarnings(
     "ignore",
     message="plotting functions contained within `_documentation_utils` are intended for nemos's documentation.",
     category=UserWarning,
 )
 
-# Ignore the second specific warning
 warnings.filterwarnings(
     "ignore",
     message="Ignoring cached namespace 'core'",
