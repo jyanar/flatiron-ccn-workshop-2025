@@ -69,12 +69,5 @@ html_theme_options = {
             "icon": "https://mybinder.org/badge_logo.svg",
         },
     ],
-    "switcher": {
-        "version_match": "0.1",
-        "json_url": "https://users.flatironinstitute.org/~wbroderick/jan-2025.json",
-    }
-}
-html_sidebars = {
-    "**": ["navbar-logo.html", "version-switcher.html", "icon-links.html", "search-button-field.html", "sbt-sidebar-nav.html"]
 }
 nb_execution_excludepatterns = ['*model_selection*']
