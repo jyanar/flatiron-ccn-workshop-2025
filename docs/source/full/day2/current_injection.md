@@ -38,6 +38,13 @@ warnings.filterwarnings(
 )
 ```
 
+:::{admonition} Download
+:class: important
+
+This notebook can be downloaded as **{nb-download}`current_injection.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
+
 # Fit injected current
 
 For our first example, we will look at a very simple dataset: patch-clamp

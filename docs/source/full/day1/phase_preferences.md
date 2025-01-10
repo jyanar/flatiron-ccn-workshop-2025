@@ -11,6 +11,14 @@ kernelspec:
   name: python3
 ---
 
+:::{admonition} Download
+:class: important
+
+This notebook can be downloaded as **{nb-download}`phase_preferences.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
+
+
 
 # Spikes-phase coupling
 

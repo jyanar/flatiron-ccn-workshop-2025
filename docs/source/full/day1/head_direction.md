@@ -11,6 +11,13 @@ kernelspec:
   name: python3
 ---
 
+:::{admonition} Download
+:class: important
+
+This notebook can be downloaded as **{nb-download}`head_direction.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
+
 
 # Analysing head-direction cells
 

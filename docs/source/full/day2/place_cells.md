@@ -38,6 +38,12 @@ warnings.filterwarnings(
 )
 ```
 
+:::{admonition} Download
+:class: important
+
+This notebook can be downloaded as **{nb-download}`place_cells.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
 
 # Fit place cell
 

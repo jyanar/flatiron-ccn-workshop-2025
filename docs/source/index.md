@@ -69,14 +69,14 @@ full/day2/*
 
 ```{toctree}
 :glob:
-:caption: Day 1, for users
+:caption: Day 1, Text Removed
 :maxdepth: 1
 users/day1/*
 ```
 
 ```{toctree}
 :glob:
-:caption: Day 2, for users
+:caption: Day 2, Text Removed
 :maxdepth: 1
 users/day2/*
 ```
