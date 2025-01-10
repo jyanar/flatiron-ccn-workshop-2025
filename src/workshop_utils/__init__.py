@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from .fetch import DOWNLOADABLE_FILES, fetch_data
+from .fetch import DOWNLOADABLE_FILES
 from .plotting import *
 
 import os
