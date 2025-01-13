@@ -482,13 +482,6 @@ axs[1].set_ylabel("LFP (a.u.)")
 fig.supxlabel("Time (s)")
 ```
 
-The estimated position oscillates with cycles of theta, which are referred to as "theta sequences". Fully understanding this organization of place cells and its role in learning, memory, and planning is an active topic of research in Neuroscience!
+The estimated position oscillates with cycles of theta, where each "sweep" is referred to as a "theta sequence". Fully understanding this organization of place cells and its role in learning, memory, and planning is an active topic of research in Neuroscience!
 
-:::{card}
-Authors
-^^^
-Kipp Freud (https://kippfreud.com/)
 
-Guillaume Viejo
-
-:::
