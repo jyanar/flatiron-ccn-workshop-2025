@@ -171,7 +171,7 @@ class Plot1DConvolution:
         ### top plot ###
         ax = axs[0]
         # this is fixed
-        ax.plot(self.index, self.tsd, label="original array")
+        ax.plot(self.index, self.tsd, label=self.tsd_label)
 
         # initial visible convolution output and top center line
         if kmid >= 0:

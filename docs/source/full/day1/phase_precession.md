@@ -17,6 +17,18 @@ Phase precession and hippocampal sequences
 
 In this tutorial we will learn how to apply two methods included in pynapple: filtering and decoding. We'll apply these methods to demonstrate and visualize some well-known physiological properties of hippocampal activity, specifically phase presession of place cells and sequential coordination of place cell activity during theta oscillations.
 
+Pynapple functions used:
+- load_file
+- restrict
+- compute_wavelet_transform
+- apply_bandpass_filter
+- compute_1d_tuning_curves
+- value_from
+- set_diff
+- count
+- convolve
+- decode_1d
+
 Background
 ----------
 - hippocampus (rat)
@@ -39,8 +51,9 @@ import tqdm
 import pynapple as nap
 import workshop_utils
 
-custom_params = {"axes.spines.right": False, "axes.spines.top": False}
-sns.set_theme(style="ticks", palette="colorblind", font_scale=1.5, rc=custom_params)
+# necessary for animation
+import nemos as nmo
+plt.style.use(nmo.styles.plot_style)
 ```
 
 ***
@@ -53,9 +66,7 @@ The full dataset for this study can be accessed on [DANDI](https://dandiarchive.
 If you ran the workshop setup script, you should have this file downloaded already. If not, the function we'll use to fetch it will download it for you. This function is called `fetch_data`, and can be imported from the `workshop_utils` module.
 
 ```{code-cell} ipython3
-from workshop_utils import fetch_data
-
-path = fetch_data("Achilles_10252013_EEG.nwb")
+path = workshop_utils.fetch_data("Achilles_10252013_EEG.nwb")
 ```
 
 This function will give us the file path to where the data is stored. We can then use the pynapple function `load_file` to load in the data, which is able to handle the NWB file type.
@@ -172,7 +183,7 @@ Filtering for theta
 -------------------
 We can extract the theta oscillation by applying a bandpass filter on the raw LFP. To do this, we use the pynapple function `nap.apply_bandpass_filter`, which takes the time series as the first argument and the frequency cutoffs as the second argument. Similarly to `nap.compute_wavelet_transorm`, we can optinally pass the sampling frequency keyword argument `fs`.
 
-Conveniently, this function will recognize and handle splits in the subsampled data (i.e. applying the filtering separately to discontinuous epochs), so we can pass the LFP for all the runs together.
+Conveniently, this function will recognize and handle splits in the epoched data (i.e. applying the filtering separately to discontinuous epochs), so we can pass the LFP for all the runs together.
 
 ```{code-cell} ipython3
 theta_band = nap.apply_bandpass_filter(lfp_run, (6.0, 12.0), fs=sample_freq)
@@ -205,20 +216,7 @@ phase[phase < 0] += 2 * np.pi # wrap to [0,2pi]
 theta_phase = nap.Tsd(t=theta_band.t, d=phase)
 ```
 
-Let's plot the phase.
-
-```{code-cell} ipython3
-fig,axs = plt.subplots(2, 1, figsize=(12,4), constrained_layout=True, sharex=True, height_ratios=[2,1])
-
-axs[0].plot(lfp_run.restrict(ex_run_ep), alpha=0.5, label="raw")
-axs[0].plot(theta_band.restrict(ex_run_ep), label="filtered")
-axs[0].set_ylabel("LFP (a.u.)")
-axs[0].legend()
-
-axs[1].plot(theta_phase.restrict(ex_run_ep), color='r')
-axs[1].set_ylabel("Phase (rad)")
-axs[1].set_xlabel("Time (s)")
-```
+Let's plot the phase on top of the filtered LFP signal.
 
 ```{code-cell} ipython3
 fig,ax = plt.subplots(figsize=(12,2), constrained_layout=True) #, sharex=True, height_ratios=[2,1])
@@ -232,105 +230,259 @@ ax.set_ylabel("LFP (a.u.)")
 fig.legend()
 ```
 
-cycle "resets" at peaks
+We can see that cycle "resets" (i.e. goes from $2\pi$ to $0$) at peaks of the theta oscillation.
 
 +++
 
 ***
 Identifying place-selective cells
 ---------------------------------
-Now that we have the phase of our theta wavelet, and our spike times, we can find the phase firing preferences
-of each of the units using the `compute_1d_tuning_curves` function.
+In order to identify phase precession in individual units, we need to know their place selectivity. We can find place firing preferences
+of each unit by using the `compute_1d_tuning_curves` function.
 
-We will start by throwing away cells which do not have a high enough firing rate during our interval.
+We'll start by narrowing down our cells to lower-firing, putative pyramidal cells, or units that fire between 1 and 10 Hz on average, to reduce to units that are likely selective to a single location. These units will give us the clearest examples of phase precession.
 
 ```{code-cell} ipython3
 pyr_spikes = spikes[(spikes.rate > 1) & (spikes.rate < 10)]
 ```
 
-compute place fields
+Using these units and the position data, we can compute their place fields by using `nap.compute_1d_tuning_curves`. The first argument will be the TsGroup of our spikes, the second argument the Tsd feature of position, and the third argument the number of evenly-spaced bins in which to split the feature for the tuning curves. This function will return a `pandas.DataFrame`, where the index is the corresponding feature value, and the column is the unit label.
 
 ```{code-cell} ipython3
 from scipy.ndimage import gaussian_filter1d
-place_fields = nap.compute_1d_tuning_curves(pyr_spikes, position, nb_bins=50)
-# filter
+place_fields = nap.compute_1d_tuning_curves(pyr_spikes, position, 50)
+```
+
+It is customary to apply a gaussian smoothing filter to place fields, which we can do by applying the `scipy` function `gaussian_filter1d`.
+
+```{code-cell} ipython3
+# apply a smoothing filter
 place_fields[:] = gaussian_filter1d(place_fields.values, 1, axis=0)
 ```
 
+We can use a subplot array to visualize the place fields of many units simultaneously. Let's do this for the first 50 units.
+
 ```{code-cell} ipython3
-fig, axs = plt.subplots(6, 10, figsize=(30, 30))
-for i, (f, fields) in enumerate(place_fields.items()):
+fig, axs = plt.subplots(10, 5, figsize=(12, 15), sharex=True, constrained_layout=True)
+for i, (f, fields) in enumerate(place_fields.iloc[:,:50].items()):
     idx = np.unravel_index(i, axs.shape)
     axs[idx].plot(fields)
     axs[idx].set_title(f)
+
+fig.supylabel("Firing rate (Hz)")
+fig.supxlabel("Position (cm)")
 ```
 
-```{code-cell} ipython3
-plt.figure(constrained_layout=True, figsize = (12, 3))
-for i in range(3):
-    plt.subplot(1,3,i+1)
-    plt.plot(phase_modulation.iloc[:,i])
-    plt.xlabel("Phase (rad)")
-    plt.ylabel("Firing rate (Hz)")
-plt.show()
-```
+We can see spatial selectivity in each of the units; across the population, we have firing fields tiling the entire linear track. 
 
-There is clearly a strong modulation for the third neuron.
-Finally, we can use the function `value_from` to align each spikes to the corresponding phase position and overlay
-it with the LFP.
+To look at phase precession, we'll zoom in on unit 177. This unit has a single strong firing field in the middle of the track, which will be conducive for visualizing phase precession.
+
++++
+
+***
+Computing phase precession within a single unit
+-----------------------------------------------
+As a first visualization of phase precession, we'll look at a single traversal of the linear track. We'll want the corresponding phase of theta at which the unit fires as the animal is running down the track, which we can compute using a pynapple object's method `value_from`. For our spiking data, this will find the phase value closest in time to each spike.
 
 ```{code-cell} ipython3
 unit = 177
 spike_phase = spikes[unit].value_from(theta_phase)
-# spike_position = spikes[unit].value_from(position)
 ```
 
-Let's plot it.
+To see the results, let's plot the theta phase, the spike phase, and the animal's position across the run, as well as the unit's place field as a reminder of it's spatial preference. (Since the relationship between a single run's time and position is nearly linear, the x-axis of position and the x-axis of time will be well-aligned.)
 
 ```{code-cell} ipython3
-fig,axs = plt.subplots(2,1, figsize=(12,6), constrained_layout=True, sharex=True)
-axs[0].plot(lfp_run.restrict(ex_run_ep))
-axs[0].plot(theta_band.restrict(ex_run_ep))
-axs[1].plot(theta_phase.restrict(ex_run_ep), alpha=0.5)
-axs[1].plot(spike_phase.restrict(ex_run_ep), 'o')
-ax = axs[1].twinx()
-ax.plot(position.restrict(ex_run_ep))
+fig,axs = plt.subplots(2,1 , figsize=(10,4), constrained_layout=True)
+axs[0].plot(theta_phase.restrict(ex_run_ep), alpha=0.5, label="theta phase")
+axs[0].plot(spike_phase.restrict(ex_run_ep), 'o', label="spike phase")
+axs[0].set_ylabel("Phase (rad)")
+axs[0].set_xlabel("Time (s)")
+axs[0].set_title("Unit 177 spike phase and animal position")
+ax = axs[0].twinx()
+ax.plot(ex_position, color="green", label="position")
+ax.set_ylabel("Position (cm)")
+fig.legend()
+
+axs[1].plot(place_fields[unit])
+axs[1].set_ylabel("Firing rate (Hz)")
+axs[1].set_xlabel("Position (cm)")
+axs[1].set_title("Unit 177 place field")
 ```
+
+As expected, unit 177 will preferentially spike (orange dots) as the animal runs through the middle of the track. Additionally, you should be able to see a negative trend in the spike phase as the animal move's further along the track. This phemomena is what is called phase precession: as an animal runs through the place field of a single unit, that unit will spike at *late* phases of theta (higher radians) in *earlyr* positions in the field, and fire at *early* phases of theta (lower radians) in *late* positions in the field.
+
+We can observe this phenomena on average across all runs by relating the spike phase to the spike position. Similar to before, we'll use the pynapple object method `value_from` to additionally find the animal position closest in time to each spike.
 
 ```{code-cell} ipython3
 spike_position = spikes[unit].value_from(position)
-plt.subplots(figsize=(3,3))
-plt.plot(spike_phase, spike_position, 'o')
-plt.xlabel("Phase (rad)")
-plt.ylabel("Position (cm)")
 ```
+
+Now we can plot the spike phase against the spike position in a scatter plot.
+
+```{code-cell} ipython3
+plt.subplots(figsize=(4,3))
+plt.plot(spike_position, spike_phase, 'o')
+plt.ylabel("Phase (rad)")
+plt.xlabel("Position (cm)")
+```
+
+Similar to what we saw in a single run, there is a negative relationship between theta phase and field position, characteristic of phase precession.
+
++++
+
+***
+Decoding position from spiking activity
+---------------------------------------
+Next we'll do a popular analysis in the rat hippocampal sphere: Bayesian decoding. This analysis is an elegent application of Bayes' rule in predicting the animal's location (or other behavioral variables) from neural activity at some point in time. 
+
+### Background
+Recall Bayes' rule, written here in terms of our relevant variables:
+
+$$P(position|spikes) = \frac{P(position)P(spikes|position)}{P(spikes)}$$
+
+Our goal is to compute the unknown posterior $P(position|spikes)$ given known prior $P(position)$ and known likelihood $P(spikes|position)$. 
+
+$P(position)$, also known as the *occupancy*, is the probability that the animal is occupying some position. This can be computed exactly by the proportion of the total time spent at each position, but in many cases it is sufficient to estimate the occupancy as a uniform distribution, i.e. it is equally likely for the animal to occupy any location.
+
+The next term, $P(spikes|position)$, which is the probability of seeing some sequence of spikes across all neurons at some position. Computing this relys on the following assumptions:
+1. Neurons fire according to a Poisson process (i.e. their spiking activity follows a Poisson distribution)
+2. Neurons fire independently from one another.
+
+While neither of these assumptions are strictly true, they are generally reasonable for pyramidal cells in hippocampus and allow us to simplify our computation of $P(spikes|position)$
+
+The first assumption gives us an equation for $P(spikes|position)$ for a single neuron, which we'll call $P(spikes_i|position)$ to differentiate it from $P(spikes|position) = P(spikes_1,spikes_2,...,spikes_i,...,spikes_N|position) $, or the total probability across all $N$ neurons. The equation we get is that of the Poisson distribution:
+$$
+P(spikes_i|position) = \frac{(\tau f_i(position))^n e^{-\tau f_i(position)}}{n!}
+$$
+where $f_i(position)$ is the firing rate of the neuron at position $(position)$ (i.e. the tuning curve), $\tau$ is the width of the time window over which we're computing the probability, and $n$ is the total number of times the neuron spiked in the time window of interest.
+
+The second assumptions allows us to simply combine the probabilities of individual neurons. Recall the product rule for independent events: $P(A,B) = P(A)P(B)$ if $A$ and $B$ are independent. Treating neurons as independent, then, gives us the following:
+$$
+P(spikes|position) = \prod_i P(spikes_i|position)
+$$
+
+The final term, $P(spikes)$, is inferred indirectly using the law of total probability:
+
+$$P(spikes) = \sum_{position}P(position,spikes) = \sum_{position}P(position)P(spikes|position)$$
+
+Another way of putting it is $P(spikes)$ is the normalization factor such that $\sum_{position} P(position|spikes) = 1$, which is achived by dividing the numerator by its sum.
+
+If this method looks daunting, we have some good news: pynapple has it implemented already in the function `nap.decode_1d` for decoding a single dimension (or `nap.decode_2d` for two dimensions). All we'll need are the spikes, the tuning curves, and the width of the time window $\tau$.
+
+### Cross-validation
+
+Generally this method is cross-validated, which means you train the model on one set of data and test the model on a different, held-out data set. For Bayesian decoding, the "model" refers to the model *likelihood*, which is computed from the tuning curves. 
+
+We want to decode the example run we've been using throughout this exercise; therefore, our training set should omit this run before computing the tuning curves. We can do this by using the IntervalSet method `set_diff`, to take out the example run epoch from all run epochs.
 
 ```{code-cell} ipython3
 # hold out trial from place field computation
 run_train = data["forward_ep"].set_diff(ex_run_ep)
+```
+
+Next, we'll restrict our data to these training epochs and re-compute the place fields using `nap.compute_1d_tuning_curves`. Similar to before, we'll applying a Gaussian smoothing filter to the place fields, which will smooth our decoding results down the line.
+
+```{code-cell} ipython3
 position_train = data["position"].restrict(run_train)
 place_fields = nap.compute_1d_tuning_curves(spikes, position_train, nb_bins=50)
+place_fields[:] = gaussian_filter1d(place_fields.values, 1, axis=0)
+```
 
-# filter place fields
-tc = gaussian_filter1d(place_fields.values, 1, axis=0)
-place_fields[:] = tc
+### Run decoder
 
-# use moving sum of spike counts
-ct = spikes.restrict(ex_run_ep).count(0.01).convolve(np.ones(4))
-t = spikes.restrict(ex_run_ep).count(0.01).index
-group = nap.TsdFrame(t=t, d=ct, columns=spikes.keys())
+This is the minumum needed to run the `nap.decode_1d` function. The first input will be our tuning curves (place fields), the second input is the `TsGroup` of spike times corresponding to units in the tuning curve DataFrame (this can also be a `TsdFrame` of spike counts), the third input is the epoch we want to decode, and the fourth input is the bin size, or the time resolution $\tau$ at which to decode.
 
-# decode
-_, p = nap.decode_1d(place_fields, group, ex_run_ep, bin_size=0.04)
+```{code-cell} ipython3
+decoded_position, decoded_prob = nap.decode_1d(place_fields, spikes, ex_run_ep, bin_size=0.2)
+```
 
-# plot
+The first output is the inferred position from the decoder, and the second output is the posterior distribution, giving the probability distribution of position given the spiking activity. (The decoded position is simply the position at which the probability is greatest.)
+
+Let's plot the posterior distribution and overlay the animal's true position.
+
+```{code-cell} ipython3
+plt.subplots(figsize=(10, 4), constrained_layout=True)
+plt.pcolormesh(decoded_position.index,place_fields.index,np.transpose(decoded_prob))
+plt.plot(decoded_position, color="green")
+plt.plot(ex_position, color="red")
+```
+
+The decoder does a reasonable job at following the animals true position, but gets worse at shorter bin sizes.
+
+```{code-cell} ipython3
+decoded_position, decoded_prob = nap.decode_1d(place_fields, spikes, ex_run_ep, bin_size=0.05)
+plt.subplots(figsize=(10, 4), constrained_layout=True)
+plt.pcolormesh(decoded_position.index,place_fields.index,np.transpose(decoded_prob))
+plt.plot(decoded_position, color="green")
+plt.plot(ex_position, color="red")
+```
+
+### Smooth spike counts for decoder
+
+One way to improve our estimation at shorter bin sizes is to instead use *sliding windows* to bin our data. This allows us to combine the accuracy of a larger bin size with the resolution of a smaller bin size by essentially smoothing the spike counts. This is a feature that will be added in a future version of pynapple, but we can still apply it ourselves by providing the spike counts directly to `nap.decode_1d` as a `TsdFrame`.
+
+Let's say we want a sliding window of $200 ms$ that shifts by $50 ms$. We can compute this efficiently by first binning at the smaller $50 s$ bin size, which we can do by applying the pynapple object method `count`.
+
+```{code-cell} ipython3
+counts = spikes.restrict(ex_run_ep).count(0.05)
+```
+
+Next, we apply a moving sum on each set of $200 ms / 50 ms = 4$ adjacent bins to "smooth" each count into $200 ms$ bins. This is the same as convolving the counts with a length 4 kernel of ones.
+
+```{code-cell} ipython3
+smth_counts = counts.convolve(np.ones(4))
+```
+
+To see this in action, we've provided an animation to visualize the convolution on a single unit. In the top figure, we'll see the original counts that have been binned in $50ms$ windows as well as the kernel representing the moving sum as it slides acorss the trial. When the kernel meets the binned counts, the convolution is equal to the integral of $kernel * counts$, or the sum of the shaded green area. The result of the convolution is in the bottom plot, a smoothed version of the counts in the top plot.
+
+```{code-cell} ipython3
+workshop_utils.animate_1d_convolution(counts.loc[177], np.ones(4), tsd_label="original counts", kernel_label="moving sum", conv_label="convolved counts")
+```
+
+Let's use `nap.decode_1d` again, but now with our smoothed counts in place of the raw spike times. Note that the bin size we'll want to provide the the larger bin size, $200ms$, since this is the true width of each bin.
+
+```{code-cell} ipython3
+smth_decoded_position, smth_decoded_prob = nap.decode_1d(place_fields, smth_counts, ex_run_ep, bin_size=0.2)
+```
+
+Let's plot the results.
+
+```{code-cell} ipython3
 plt.subplots(figsize=(12, 4), constrained_layout=True)
-plt.pcolormesh(p.index, p.columns, np.transpose(p))
-plt.plot(position.restrict(ex_run_ep), color="r")
+plt.pcolormesh(smth_decoded_prob.index, smth_decoded_prob.columns, np.transpose(smth_decoded_prob))
+plt.plot(smth_decoded_position, color="green")
+plt.plot(ex_position, color="r")
 plt.xlabel("Time (s)")
 plt.ylabel("Position (cm)")
 plt.colorbar(label = "predicted probability")
 ```
+
+We can see a much smoother estimate of position, as well as a smoother posterior probability of position.
+
+### Bonus: theta sequences
+Units phase precessing together creates fast, spatial sequences around the animal's true position. We can reveal this by decoding at an even shorter time scale, which will appear as errors in the decoder.
+
+```{code-cell} ipython3
+counts = spikes.restrict(ex_run_ep).count(0.01)
+smth_counts = counts.convolve(np.ones(4))
+smth_decoded_position, smth_decoded_prob = nap.decode_1d(place_fields, smth_counts, ex_run_ep, bin_size=0.04)
+
+fig, axs = plt.subplots(2, 1, figsize=(12, 4), constrained_layout=True, height_ratios=[3,1], sharex=True)
+c = axs[0].pcolormesh(smth_decoded_prob.index, smth_decoded_prob.columns, np.transpose(smth_decoded_prob))
+axs[0].plot(smth_decoded_position, color="green")
+axs[0].plot(ex_position, color="r")
+# axs[0].set_xlabel("Time (s)")
+axs[0].set_ylabel("Position (cm)")
+fig.colorbar(c, label = "predicted probability")
+
+axs[1].plot(ex_lfp_run)
+axs[1].plot(theta_band.restrict(ex_run_ep))
+axs[1].set_ylabel("LFP (a.u.)")
+
+fig.supxlabel("Time (s)")
+```
+
+The estimated position oscillates with cycles of theta, which are referred to as "theta sequences". Fully understanding this organization of place cells and its role in learning, memory, and planning is an active topic of research in Neuroscience!
 
 :::{card}
 Authors
