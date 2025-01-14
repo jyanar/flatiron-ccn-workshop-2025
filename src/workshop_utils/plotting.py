@@ -6,8 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import Union, Optional
 from numpy.typing import NDArray
+import seaborn as sns
+from nemos import _documentation_utils as doc_plots
 
-__all__ = ["plot_features", "plot_head_direction_tuning_model"]
+__all__ = ["plot_features", "plot_head_direction_tuning_model", "plot_feature_mask",
+           "plot_heatmap_cv_results"]
 
 def plot_features(
     input_feature: Union[nap.Tsd, nap.TsdFrame, nap.TsdTensor, NDArray],
@@ -208,3 +211,55 @@ def plot_head_direction_tuning_model(
             ax.set_yticks([])
     plt.tight_layout()
     return fig
+
+
+def plot_feature_mask(masks):
+    height = 5
+    if not isinstance(masks, list):
+        masks = [masks]
+    width = 5 * masks[0].shape[1] / masks[0].shape[0]
+    fig, axes = plt.subplots(1, 1+len(masks), sharey=True,
+                             figsize=((width+.5)*(.5+len(masks)), height))
+    cmap = 'RdBu'
+    for i, (ax, m) in enumerate(zip(axes, masks)):
+        if i == 0:
+            ax.set_ylabel("feature")
+        if i == (len(axes)-1)//2:
+            ax.set_xlabel("neuron")
+        ax.imshow(m, vmin=-1, vmax=1, cmap=cmap)
+        ax.set_title(f"Mask {i}")
+    norm = plt.Normalize(vmin=-1, vmax=1)
+    cmap = plt.get_cmap(cmap)
+    handles = [plt.Rectangle((0, 0), 0, 1, color=cmap(norm(1)), label=1),
+               plt.Rectangle((0, 0), 0, 0, color=cmap(norm(0)), label=0),]
+    fig.legend(handles=handles, loc=5)
+    axes[-1].set_visible(False)
+    return fig
+
+
+def facet_heatmap(index, columns, values, data, **heatmap_kwargs):
+    data = data.pivot(index=index, columns=columns, values=values)
+    ax = sns.heatmap(data, **heatmap_kwargs)
+    doc_plots.highlight_max_cell(data, ax)
+
+
+def format_regularizer(x):
+    reg = str(x["param_glm__regularizer"]).split('(')[0]
+    reg_str =  x["param_glm__regularizer_strength"]
+    if not np.isnan(reg_str):
+        reg += f"({reg_str})"
+    return reg
+
+def plot_heatmap_cv_results(cv_df, facet_col=None,
+                            rows="param_basis__n_basis_funcs",
+                            columns="param_glm", values="mean_test_score",
+                            fmt=".3f"):
+    if "param_glm" not in cv_df.columns:
+        try:
+            cv_df["param_glm"] = cv_df.apply(format_regularizer, 1)
+        except KeyError:
+            pass
+    fig = sns.FacetGrid(cv_df, col=facet_col, height=5)
+    fig.map_dataframe(facet_heatmap, index=rows, columns=columns, values=values,
+                      annot=True, square=True,
+                      linecolor="white", linewidth=0.5, fmt=fmt)
