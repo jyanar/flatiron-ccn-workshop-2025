@@ -10,7 +10,8 @@ import seaborn as sns
 from nemos import _documentation_utils as doc_plots
 
 __all__ = ["plot_features", "plot_head_direction_tuning_model", "plot_feature_mask",
-           "plot_heatmap_cv_results", "plot_position_speed"]
+           "plot_heatmap_cv_results", "plot_position_speed",
+           "plot_position_speed_tuning"]
 
 def plot_features(
     input_feature: Union[nap.Tsd, nap.TsdFrame, nap.TsdTensor, NDArray],
@@ -218,21 +219,25 @@ def plot_head_direction_tuning_model(
     return fig
 
 
-def plot_feature_mask(masks):
+def plot_feature_mask(masks, titles=None):
     height = 5
     if not isinstance(masks, list):
         masks = [masks]
+    if titles is None:
+        titles = [f"Mask {i}" for i in range(len(masks))]
     width = 5 * masks[0].shape[1] / masks[0].shape[0]
     fig, axes = plt.subplots(1, 1+len(masks), sharey=True,
                              figsize=((width+.5)*(.5+len(masks)), height))
     cmap = 'RdBu'
-    for i, (ax, m) in enumerate(zip(axes, masks)):
+    for i, (ax, m, t) in enumerate(zip(axes, masks, titles)):
         if i == 0:
             ax.set_ylabel("feature")
         if i == (len(axes)-1)//2:
             ax.set_xlabel("neuron")
         ax.imshow(m, vmin=-1, vmax=1, cmap=cmap)
-        ax.set_title(f"Mask {i}")
+        if m.shape[1] < 5:
+            ax.set(xticks=range(m.shape[1]))
+        ax.set_title(t)
     norm = plt.Normalize(vmin=-1, vmax=1)
     cmap = plt.get_cmap(cmap)
     handles = [plt.Rectangle((0, 0), 0, 1, color=cmap(norm(1)), label=1),
@@ -256,8 +261,9 @@ def format_regularizer(x):
     return reg
 
 def plot_heatmap_cv_results(cv_df, facet_col=None,
-                            rows="param_basis__n_basis_funcs",
-                            columns="param_glm", values="mean_test_score",
+                            rows="param_basis__basis1__n_basis_funcs",
+                            columns="param_basis__basis2",
+                            values="mean_test_score",
                             fmt=".3f"):
     if "param_glm" not in cv_df.columns:
         try:
@@ -276,7 +282,6 @@ def _analyze_speed(speed: pd.DataFrame, position: nap.Tsd):
     mean_speed = np.array([np.mean(speed[idx==i]) for i in np.unique(idx)])
     std_speed = np.array([np.std(speed[idx==i]) for i in np.unique(idx)])
     return bins, mean_speed, std_speed
-
 
 def plot_position_speed(position: nap.Tsd, speed: nap.Tsd,
                         position_tuning: pd.DataFrame, speed_tuning: pd.DataFrame,
@@ -309,5 +314,35 @@ def plot_position_speed(position: nap.Tsd, speed: nap.Tsd,
             speed_tuning[n].values
         )
         ax.set(ylabel="Firing rate (Hz)", xlabel="Speed (cm/s)", title="Speed tuning")
+    return fig
+
+
+def plot_position_speed_tuning(position_tuning: pd.DataFrame, speed_tuning: pd.DataFrame,
+                               neuron_id: Union[int, List[int]],
+                               model_position_tuning: Optional[pd.DataFrame] = None,
+                               model_speed_tuning: Optional[pd.DataFrame] = None):
+    if not hasattr(neuron_id, "__iter__"):
+        neuron_id = [neuron_id]
+    fig = plt.figure(figsize=(6*len(neuron_id), 3))
+    gs = plt.GridSpec(1, 2*len(neuron_id), wspace=.3, hspace=.35)
+    pos_ax = None
+    speed_ax = None
+    for i, n in enumerate(neuron_id):
+        ax = fig.add_subplot(gs[0, 2*i], sharey=pos_ax, sharex=pos_ax)
+        ax.plot(position_tuning[n], '--')
+        if model_position_tuning is not None:
+            ax.plot(model_position_tuning[n])
+        ax.set(xlabel="Position (cm)", ylabel="Firing rate (Hz)", title="Position tuning")
+        ax.text(1, 1.2, f"Neuron {n}", transform=ax.transAxes, size="x-large")
+        if pos_ax is None:
+            pos_ax = ax
+
+        ax = fig.add_subplot(gs[0, 2*i+1], sharex=speed_ax, sharey=pos_ax)
+        ax.plot(speed_tuning[n], '--')
+        if model_speed_tuning is not None:
+            ax.plot(model_speed_tuning[n])
+        ax.set(ylabel="Firing rate (Hz)", xlabel="Speed (cm/s)", title="Speed tuning")
+        if speed_ax is None:
+            speed_ax = ax
     # fig.tight_layout()
     return fig
