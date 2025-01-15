@@ -43,6 +43,12 @@ After doing the above, the `data/` and `notebooks/` directories within your loca
 
 We will work through the notebooks in the order they're listed on this website.
 
+:::{warning}
+
+We have noticed jupyter notebooks behaving a bit odd in Safari --- if you are running/editing jupyter in Safari and the behavior seems off (scrolling not smooth, lag between creation and display of cells), try a different browser. We've had luck with Firefox.
+
+:::
+
 ## Binder
 
 Some usage notes:
