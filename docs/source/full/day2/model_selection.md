@@ -155,8 +155,8 @@ Now that we've fit the data, let's generate the predictions and investigate them
 ```{code-cell} ipython3
 predicted_firing_rate = unreg_model.predict(convolved_count) * convolved_count.rate
 
-workshop_utils.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes,
-                                                angle, threshold_hz=1,
+workshop_utils.plot_head_direction_tuning_model(tuning_curves, spikes, angle, 
+                                                predicted_firing_rate, threshold_hz=1,
                                                 start=8910, end=8960, cmap_label="hsv",);
 ```
 
@@ -176,7 +176,7 @@ tuning = nap.compute_1d_tuning_curves_continuous(predicted_firing_rate,
 ```
 
 ```{code-cell} ipython3
-weights = basis.split_by_feature(unreg_model.coef_, 0)["Spikes"]
+weights = basis.split_by_feature(unreg_model.coef_, 0)['RaisedCosineLogConv']
 ```
 
 ```{code-cell} ipython3
@@ -279,7 +279,7 @@ cv_df
 ```
 
 ```{code-cell} ipython3
-workshop_utils.plot_heatmap_cv_results(cv_df)
+workshop_utils.plot_heatmap_cv_results(cv_df, rows='param_basis__n_basis_funcs', columns='param_glm')
 ```
 
 can see that regularization matters more as the number of basis functions and thus the number of parameters to fit increases
@@ -338,7 +338,7 @@ cv_df
 ```
 
 ```{code-cell} ipython3
-workshop_utils.plot_heatmap_cv_results(cv_df)
+workshop_utils.plot_heatmap_cv_results(cv_df, rows='param_basis__n_basis_funcs', columns='param_glm')
 ```
 
 :::{note}
@@ -390,8 +390,11 @@ model_tuning = pd.DataFrame(data=model_tuning, index=2*np.pi * basis_angs, colum
 predicted_firing_rate = pipe.predict(angle_interp) * angle_interp.rate
 
 # use pynapple for time axis for all variables plotted for tick labels in imshow
-workshop_utils.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes, angle, threshold_hz=1,
-                                                start=8910, end=8960, cmap_label="hsv", pref_ang=pref_ang, model_tuning_curves=model_tuning.clip(0));
+workshop_utils.plot_head_direction_tuning_model(tuning_curves, spikes, angle, 
+                                                predicted_firing_rate, threshold_hz=1,
+                                                start=8910, end=8960, cmap_label="hsv",
+                                                pref_ang=pref_ang,
+                                                model_tuning_curves=model_tuning.clip(0));
 ```
 
 looks very similar to what we saw before! 
@@ -519,8 +522,10 @@ tuning.columns = pref_ang.sort_values().index
 
 ```{code-cell} ipython3
 # use pynapple for time axis for all variables plotted for tick labels in imshow
-workshop_utils.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes, angle, threshold_hz=1,
-                                                start=8910, end=8960, cmap_label="hsv", pref_ang=pref_ang, 
+workshop_utils.plot_head_direction_tuning_model(tuning_curves, spikes, angle, 
+                                                predicted_firing_rate, threshold_hz=1,
+                                                start=8910, end=8960, cmap_label="hsv", 
+                                                pref_ang=pref_ang, 
                                                 );
 ```
 

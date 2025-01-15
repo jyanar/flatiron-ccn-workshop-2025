@@ -330,12 +330,7 @@ position_basis = nmo.basis.MSplineEval(n_basis_funcs=10).to_transformer()
 This gives the basis object the `transform` method. However, transformers have some limits:
 
 ```{code-cell} ipython3
----
-editable: true
-slideshow:
-  slide_type: ''
-tags: [raises-exception]
----
+:tags: [raises-exception]
 position_basis.transform(position)
 ```
 

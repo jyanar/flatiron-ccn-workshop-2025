@@ -64,9 +64,9 @@ def plot_features(
 
 def plot_head_direction_tuning_model(
     tuning_curves: pd.DataFrame,
-    predicted_firing_rate: nap.TsdFrame,
     spikes: nap.TsGroup,
     angle: nap.Tsd,
+    predicted_firing_rate: Optional[nap.TsdFrame] = None,
     pref_ang: Optional[pd.Series] = None,
     model_tuning_curves: Optional[pd.DataFrame] = None,
     threshold_hz: int = 1,
@@ -82,12 +82,12 @@ def plot_head_direction_tuning_model(
     ----------
     tuning_curves:
         The tuning curve dataframe.
-    predicted_firing_rate:
-        The time series of the predicted rate.
     spikes:
         The spike times.
     angle:
         The heading angles.
+    predicted_firing_rate:
+        The time series of the predicted rate.
     threshold_hz:
         Minimum firing rate for neuron to be plotted.,
     start:
@@ -124,11 +124,12 @@ def plot_head_direction_tuning_model(
         unq_angles[-1] - unq_angles[0]
     )
 
-    if model_tuning_curves is None:
-        n_rows = 4
-    else:
+    n_rows = 3
+    if predicted_firing_rate is not None:
+        n_rows += 1
+    if model_tuning_curves is not None:
         model_tuning_curves = model_tuning_curves.loc[:, index_keep]
-        n_rows = 5
+        n_rows += 1
     if figsize is None:
         figsize = [12, 6]
         if n_rows == 5:
@@ -159,26 +160,28 @@ def plot_head_direction_tuning_model(
     ax.set_ylabel("Sorted Neurons")
     ax.set_xlabel("Time (s)")
     ax.set_xlim(8910, 8960)
+    curr_row = 2
 
-    ax = plt.subplot2grid(
-        (n_rows, n_subplots), loc=(2, 0), rowspan=1, colspan=n_subplots, fig=fig
-    )
-    ax.set_title("Neural Firing Rate")
-
-    fr = predicted_firing_rate.restrict(plot_ep).d
-    fr = fr.T / np.max(fr, axis=1)
-    ax.imshow(fr[::-1], cmap="Blues", aspect="auto")
-    ax.set_ylabel("Sorted Neurons")
-    ax.set_xlabel("Time (s)")
-    ax.set_xticks([0, 1000, 2000, 3000, 4000, 5000])
-    ax.set_xticklabels([8910, 8920, 8930, 8940, 8950, 8960])
-    ax.set_xlim(0, 5000)
+    if predicted_firing_rate is not None:
+        ax = plt.subplot2grid(
+            (n_rows, n_subplots), loc=(curr_row, 0), rowspan=1, colspan=n_subplots, fig=fig
+        )
+        curr_row += 1
+        ax.set_title("Neural Firing Rate")
+        fr = predicted_firing_rate.restrict(plot_ep).d
+        fr = fr.T / np.max(fr, axis=1)
+        ax.imshow(fr[::-1], cmap="Blues", aspect="auto")
+        ax.set_ylabel("Sorted Neurons")
+        ax.set_xlabel("Time (s)")
+        ax.set_xticks([0, 1000, 2000, 3000, 4000, 5000])
+        ax.set_xticklabels([8910, 8920, 8930, 8940, 8950, 8960])
+        ax.set_xlim(0, 5000)
 
     for i, ang in enumerate(unq_angles):
         neu_idx = np.argsort(pref_ang.values)[i]
         ax = plt.subplot2grid(
             (n_rows, n_subplots),
-            loc=(3 + i // n_subplots, i % n_subplots),
+            loc=(curr_row + i // n_subplots, i % n_subplots),
             rowspan=1,
             colspan=1,
             fig=fig,
@@ -193,6 +196,7 @@ def plot_head_direction_tuning_model(
         )
         ax.set_xticks([])
         ax.set_yticks([])
+    curr_row += 1
 
     if model_tuning_curves is not None:
         for i, ang in enumerate(unq_angles):
@@ -200,7 +204,7 @@ def plot_head_direction_tuning_model(
 
             ax = plt.subplot2grid(
                 (n_rows, n_subplots),
-                loc=(4 + i // n_subplots, i % n_subplots),
+                loc=(curr_row + i // n_subplots, i % n_subplots),
                 rowspan=1,
                 colspan=1,
                 fig=fig,
