@@ -4,13 +4,13 @@ import pynapple as nap
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import Union, Optional
+from typing import Union, Optional, List
 from numpy.typing import NDArray
 import seaborn as sns
 from nemos import _documentation_utils as doc_plots
 
 __all__ = ["plot_features", "plot_head_direction_tuning_model", "plot_feature_mask",
-           "plot_heatmap_cv_results"]
+           "plot_heatmap_cv_results", "plot_position_speed"]
 
 def plot_features(
     input_feature: Union[nap.Tsd, nap.TsdFrame, nap.TsdTensor, NDArray],
@@ -268,3 +268,46 @@ def plot_heatmap_cv_results(cv_df, facet_col=None,
     fig.map_dataframe(facet_heatmap, index=rows, columns=columns, values=values,
                       annot=True, square=True,
                       linecolor="white", linewidth=0.5, fmt=fmt)
+
+
+def _analyze_speed(speed: pd.DataFrame, position: nap.Tsd):
+    bins = np.linspace(np.min(position), np.max(position), 20)
+    idx = np.digitize(position.values, bins)
+    mean_speed = np.array([np.mean(speed[idx==i]) for i in np.unique(idx)])
+    std_speed = np.array([np.std(speed[idx==i]) for i in np.unique(idx)])
+    return bins, mean_speed, std_speed
+
+
+def plot_position_speed(position: nap.Tsd, speed: nap.Tsd,
+                        position_tuning: pd.DataFrame, speed_tuning: pd.DataFrame,
+                        neuron_id: Union[int, List[int]]):
+    if not hasattr(neuron_id, "__iter__"):
+        neuron_id = [neuron_id]
+    fig = plt.figure(figsize=(6*len(neuron_id), 6))
+    gs = plt.GridSpec(2, 2*len(neuron_id), wspace=.3, hspace=.35)
+    for i, n in enumerate(neuron_id):
+        ax = fig.add_subplot(gs[0, 2*i])
+        ax.fill_between(position_tuning[n].index.values, np.zeros(len(position_tuning)),
+                        position_tuning[n].values)
+        ax.set(xlabel="Position (cm)", ylabel="Firing rate (Hz)", title="Position tuning")
+        ax.text(1, 1.2, f"Neuron {n}", transform=ax.transAxes, size="x-large")
+
+        ax = fig.add_subplot(gs[1, 2*i])
+        bins, mean_speed, std_speed = _analyze_speed(speed, position)
+
+        ax.plot(bins, mean_speed)
+        ax.fill_between(
+            bins,
+            mean_speed - std_speed,
+            mean_speed + std_speed,
+            alpha=0.1,
+        )
+        ax.set(xlabel="Position (cm)", ylabel="Speed (cm/s)", title="Animal speed")
+        ax = fig.add_subplot(gs[1, 2*i+1])
+        ax.fill_between(
+            speed_tuning.index.values, np.zeros(len(speed_tuning)),
+            speed_tuning[n].values
+        )
+        ax.set(ylabel="Firing rate (Hz)", xlabel="Speed (cm/s)", title="Speed tuning")
+    # fig.tight_layout()
+    return fig
