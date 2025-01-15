@@ -501,7 +501,7 @@ for k, v in coefs.items():
 ```
 
 ```{code-cell} ipython3
-responses = np.einsum("jki,tk->ijt", coefs["Spikes"], basis_kernel)
+responses = np.einsum("jki,tk->ijt", coefs["RaisedCosineLogConv"], basis_kernel)
 print(responses.shape)
 ```
 
