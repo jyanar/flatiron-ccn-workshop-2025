@@ -41,7 +41,7 @@ dependencies = [
     'jupyter',
     'pillow',
     'nemos @ git+https://github.com/flatironinstitute/nemos.git@development',
-    'pynapple @ git+https://github.com/pynapple-org/pynapple.git@fix_nwb_load_metadata',
+    'pynapple @ git+https://github.com/pynapple-org/pynapple.git@dev',
     'click',
     'ipython',
     "scikit-learn",
