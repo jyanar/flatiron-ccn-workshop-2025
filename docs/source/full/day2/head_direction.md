@@ -4,9 +4,9 @@ jupytext:
     extension: .md
     format_name: myst
     format_version: 0.13
-    jupytext_version: 1.16.4
+    jupytext_version: 1.16.6
 kernelspec:
-  display_name: Python 3
+  display_name: Python 3 (ipykernel)
   language: python
   name: python3
 ---
@@ -145,7 +145,7 @@ Before using NeMoS, let's explore the data at the population level.
 Let's plot the preferred heading
 
 ```{code-cell} ipython3
-fig = doc_plots.plot_head_direction_tuning(
+fig = workshop_utils.plot_head_direction_tuning(
     tuning_curves, spikes, angle, threshold_hz=1, start=8910, end=8960
 )
 ```
@@ -614,7 +614,7 @@ Plot fit predictions over a short window not used for training.
 
 ```{code-cell} ipython3
 # use pynapple for time axis for all variables plotted for tick labels in imshow
-doc_plots.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes, angle, threshold_hz=1,
+workshop_utils.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes, angle, threshold_hz=1,
                                           start=8910, end=8960, cmap_label="hsv");
 ```
 

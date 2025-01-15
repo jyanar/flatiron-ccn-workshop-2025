@@ -13,6 +13,8 @@ kernelspec:
 ---
 
 ```{code-cell} ipython3
+:tags: [hide-input]
+
 %load_ext autoreload
 %autoreload 2
     
@@ -47,7 +49,23 @@ This notebook can be downloaded as **{nb-download}`model_selection.ipynb`**. See
 
 :::
 
-# Model selection
+# Model selection and comparison
+
+In this final selection, we're going to learn a little bit more about how to do model selection with nemos. This is a very big topic, which we're only going to cover a small portion of.
+
+nemos does not implement the types of algorithms or machinery that are used for performing model selection. Instead, to avoid re-inventing the wheel, we have written nemos objects so that they are compatible with [scikit-learn](https://scikit-learn.org/stable/index.html) (also called "sklearn"), the standard library for machine learning in python. Thus, we can take advantage of their extensive library! In this notebook, we're going to focus on using cross-validation for model selection and comparison.
+
+:::{note}
+While we've done our best, we haven't tested all possible ways of using nemos with scikit-learn. If you try to use it and discover unexpected behavior or an error, please [let us know!](https://github.com/flatironinstitute/nemos/issues) We'd really appreciate it.
+:::
+
+## Learning objectives
+
+- Learn how to use nemos objects with [scikit-learn](https://scikit-learn.org/stable/index.html).
+- Learn how to use scikit-learn's pipeline and cross-validation objects.
+- Learn how to compare different models using cross-validation.
+
+First, some imports and configuration. Most of this should look familiar by now:
 
 ```{code-cell} ipython3
 import matplotlib.pyplot as plt
@@ -55,7 +73,6 @@ import numpy as np
 import pynapple as nap
 import pandas as pd
 import nemos as nmo
-import seaborn as sns
 
 # some helper plotting functions
 from nemos import _documentation_utils as doc_plots
@@ -72,13 +89,13 @@ from sklearn import model_selection, pipeline
 cv_folds = 3
 ```
 
+To allow us to focus on scikit-learn and model selection, we're going to use the head direction dataset that Edoardo was just analyzing. The following code loads in this dataset and fits the fully-connected model (using bases) that Edoardo walked us through:
+
 ```{code-cell} ipython3
 path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
 data = nap.load_file(path)
 data
-```
 
-```{code-cell} ipython3
 epochs = data["epochs"]
 wake_ep = epochs[epochs.tags == "wake"]
 wake_ep = nap.IntervalSet(
@@ -91,14 +108,10 @@ spikes = spikes.restrict(wake_ep).getby_threshold("rate", 1.0)
 
 angle = data["ry"]
 angle = angle.restrict(wake_ep)
-```
 
-```{code-cell} ipython3
 bin_size = 0.01
 count = spikes.count(bin_size, ep=wake_ep)
-```
 
-```{code-cell} ipython3
 tuning_curves = nap.compute_1d_tuning_curves(
     group=spikes, feature=angle, nb_bins=61, minmax=(0, 2 * np.pi)
 )
@@ -108,25 +121,17 @@ count = nap.TsdFrame(
     d=count.values[:, np.argsort(pref_ang.values)],
     time_support=count.time_support,
 )
-```
 
-```{code-cell} ipython3
 window_size_sec = 0.8
 window_size = int(window_size_sec * count.rate)
-```
 
-One additional thing: we're going to add labels
-
-```{code-cell} ipython3
 basis = nmo.basis.RaisedCosineLogConv(
-    n_basis_funcs=8, window_size=window_size, label="Spikes",
+    n_basis_funcs=8, window_size=window_size
 )
 basis_time, basis_kernel = basis.evaluate_on_grid(80)
 # convolve all the neurons
 convolved_count = basis.compute_features(count)
-```
 
-```{code-cell} ipython3
 conn_model = nmo.glm.PopulationGLM(
     regularizer="Ridge",
     solver_name="LBFGS",
@@ -135,29 +140,30 @@ conn_model = nmo.glm.PopulationGLM(
 conn_firing_rate = conn_model.predict(convolved_count) * convolved_count.rate
 ```
 
-# Show unregularized behavior
+## Why regularize?
 
-and then we'll walk through how we picked it
+There are many types of "model selection" problems one can investigate with cross-validation. To start, let's consider something we swept under the rug in the last notebook: why did Edoardo use a regularizer?
+
+Let's see what our solution would've looked like without regularization. Let's create and fit a fully-connected model, so it uses the design matrix we set up above, but without any regularization. You know how to do this by now:
 
 ```{code-cell} ipython3
 unreg_model = nmo.glm.PopulationGLM(solver_name="LBFGS").fit(convolved_count, count)
 ```
 
-```{code-cell} ipython3
-predicted_firing_rate = unreg_model.predict(convolved_count) * convolved_count.rate
-```
+Now that we've fit the data, let's generate the predictions and investigate them.
 
 ```{code-cell} ipython3
-# use pynapple for time axis for all variables plotted for tick labels in imshow
-workshop_utils.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes, angle, threshold_hz=1,
+predicted_firing_rate = unreg_model.predict(convolved_count) * convolved_count.rate
+
+workshop_utils.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes,
+                                                angle, threshold_hz=1,
                                                 start=8910, end=8960, cmap_label="hsv",);
 ```
 
 ```{code-cell} ipython3
 fig = doc_plots.plot_rates_and_smoothed_counts(
     count[:, 0],
-    {
-     "All-to-all: regularized": conn_firing_rate[:, 0],
+    {"All-to-all: regularized": conn_firing_rate[:, 0],
      "All-to-all: unregularized": predicted_firing_rate[:, 0]}
 )
 ```

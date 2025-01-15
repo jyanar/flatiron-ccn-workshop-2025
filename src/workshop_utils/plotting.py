@@ -140,6 +140,7 @@ def plot_head_direction_tuning_model(
     ax.plot(angle.restrict(plot_ep), color="k", lw=2)
     ax.set_ylabel("Angle (rad)")
     ax.set_title("Animal's Head Direction")
+    ax.set_xlim(8910, 8960)
 
     ax = plt.subplot2grid(
         (n_rows, n_subplots), loc=(1, 0), rowspan=1, colspan=n_subplots, fig=fig
@@ -156,6 +157,7 @@ def plot_head_direction_tuning_model(
         )
     ax.set_ylabel("Sorted Neurons")
     ax.set_xlabel("Time (s)")
+    ax.set_xlim(8910, 8960)
 
     ax = plt.subplot2grid(
         (n_rows, n_subplots), loc=(2, 0), rowspan=1, colspan=n_subplots, fig=fig
@@ -167,6 +169,9 @@ def plot_head_direction_tuning_model(
     ax.imshow(fr[::-1], cmap="Blues", aspect="auto")
     ax.set_ylabel("Sorted Neurons")
     ax.set_xlabel("Time (s)")
+    ax.set_xticks([0, 1000, 2000, 3000, 4000, 5000])
+    ax.set_xticklabels([8910, 8920, 8930, 8940, 8950, 8960])
+    ax.set_xlim(0, 5000)
 
     for i, ang in enumerate(unq_angles):
         neu_idx = np.argsort(pref_ang.values)[i]

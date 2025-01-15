@@ -70,4 +70,5 @@ html_theme_options = {
         },
     ],
 }
-nb_execution_excludepatterns = ['*model_selection*', '*stripped*']
+nb_execution_excludepatterns = ['*stripped*']
+nb_execution_mode = "cache"
