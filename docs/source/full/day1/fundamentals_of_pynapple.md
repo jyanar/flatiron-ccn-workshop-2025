@@ -363,7 +363,7 @@ If not, please ask a TA.
 
 
 ```{code-cell} ipython3
-import nemos as nmo
-path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
+import workshop_utils
+path = workshop_utils.fetch_data("Mouse32-140822.nwb")
 print(path)
 ```

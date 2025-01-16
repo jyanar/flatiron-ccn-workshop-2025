@@ -36,6 +36,7 @@ import seaborn as sns
 import requests, math, os
 import tqdm
 import nemos as nmo
+import workshop_utils
 
 custom_params = {"axes.spines.right": False, "axes.spines.top": False}
 sns.set_theme(style="ticks", palette="colorblind", font_scale=1.5, rc=custom_params)
@@ -49,7 +50,7 @@ It's a small NWB file that we can download using NeMoS `fetch_data`.
 
 
 ```{code-cell} ipython3
-path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
+path = workshop_utils.fetch_data("Mouse32-140822.nwb")
 ```
 
 ***

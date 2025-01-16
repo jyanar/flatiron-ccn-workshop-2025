@@ -97,6 +97,7 @@ import nemos as nmo
 
 # some helper plotting functions
 from nemos import _documentation_utils as doc_plots
+import workshop_utils
 
 # configure plots some
 plt.style.use(nmo.styles.plot_style)
@@ -127,7 +128,7 @@ On subsequent runs, the cell gets skipped: we do not need to redownload the
 data.
 
 ```{code-cell} ipython3
-path = nmo.fetch.fetch_data("allen_478498617.nwb")
+path = workshop_utils.fetch_data("allen_478498617.nwb")
 ```
 
 ## Pynapple

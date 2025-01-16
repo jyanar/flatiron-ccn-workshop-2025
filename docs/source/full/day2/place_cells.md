@@ -60,6 +60,7 @@ import nemos as nmo
 
 # some helper plotting functions
 from nemos import _documentation_utils as doc_plots
+import workshop_utils
 
 # configure plots some
 plt.style.use(nmo.styles.plot_style)
@@ -74,7 +75,7 @@ Here we load the data from OSF. The data is a NWB file.
 
 
 ```{code-cell} ipython3
-path = nmo.fetch.fetch_data("Achilles_10252013.nwb")
+path = workshop_utils.fetch_data("Achilles_10252013_EEG.nwb")
 ```
 
 ## Pynapple
