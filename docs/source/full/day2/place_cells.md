@@ -39,7 +39,7 @@ warnings.filterwarnings(
 ```
 
 :::{admonition} Download
-:class: important
+:class: important render-all
 
 This notebook can be downloaded as **{nb-download}`place_cells.ipynb`**. See the button at the top right to download as markdown or pdf.
 
@@ -75,7 +75,7 @@ Here we load the data from OSF. The data is a NWB file.
 
 
 ```{code-cell} ipython3
-path = workshop_utils.fetch_data("Achilles_10252013_EEG.nwb")
+path = workshop_utils.fetch_data("Achilles_10252013.nwb")
 ```
 
 ## Pynapple

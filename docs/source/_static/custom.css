@@ -2,6 +2,10 @@
     max-width: 100%; /* default is 60em */
 }
 
-.render-strip {
+.render-user {
+    display: none;
+}
+
+.render-presenter {
     display: none;
 }

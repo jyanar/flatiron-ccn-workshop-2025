@@ -39,10 +39,9 @@ warnings.filterwarnings(
 ```
 
 :::{admonition} Download
-:class: important
+:class: important render-all
 
 This notebook can be downloaded as **{nb-download}`current_injection.ipynb`**. See the button at the top right to download as markdown or pdf.
-
 :::
 
 # Fit injected current

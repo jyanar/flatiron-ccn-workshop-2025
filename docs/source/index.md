@@ -61,28 +61,22 @@ Some usage notes:
 
 ```{toctree}
 :glob:
-:caption: Day 1
-:maxdepth: 1
-full/day1/*
+:caption: Full notebooks
+:titlesonly:
+full/*/*
 ```
 
 ```{toctree}
 :glob:
-:caption: Day 2
-:maxdepth: 1
-full/day2/*
+:caption: For users (some code, some text)
+:titlesonly:
+users/*/*
 ```
 
 ```{toctree}
 :glob:
-:caption: Day 1, Text Removed
+:caption: For presenter reference (all code, no text)
+:titlesonly:
 :maxdepth: 1
-users/day1/*
-```
-
-```{toctree}
-:glob:
-:caption: Day 2, Text Removed
-:maxdepth: 1
-users/day2/*
+presenters/*/*
 ```
