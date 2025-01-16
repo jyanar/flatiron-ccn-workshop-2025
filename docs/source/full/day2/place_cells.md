@@ -359,8 +359,6 @@ position_basis = position_basis.to_transformer()
 speed_basis = nmo.basis.MSplineEval(n_basis_funcs=15).to_transformer().set_input_shape(1)
 # could also create the additive basis and then call to transformer
 basis = position_basis + speed_basis
-## REMOVE THIS
-basis.set_input_shape(1, 1)
 ```
 
 Create our input:
@@ -387,8 +385,6 @@ position_basis = position_basis.to_transformer()
 speed_basis = nmo.basis.MSplineEval(n_basis_funcs=15, label="speed").to_transformer().set_input_shape(1)
 # could also create the additive basis and then call to transformer
 basis = position_basis + speed_basis
-## REMOVE THIS
-basis.set_input_shape(1, 1)
 ```
 
 ## Pipelines
