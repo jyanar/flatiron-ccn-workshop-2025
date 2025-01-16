@@ -33,9 +33,9 @@ This notebook can be downloaded as **{nb-download}`fundamentals_of_pynapple.ipyn
 - Learn the core functions of pynapple
 - Extras : pynajax
 
-The pynapple documentation can be found [here](https://pynapple-org.github.io/pynapple/).
+The pynapple documentation can be found [here](https://pynapple.org).
 
-The documentation for objects and method of the core of pynapple is [here](https://pynapple-org.github.io/pynapple/reference/core/).
+The documentation for objects and method of the core of pynapple is [here](https://pynapple.org/api.html).
 
 
 Let's start by importing the pynapple package and matplotlib to see if everything is correctly installed.
