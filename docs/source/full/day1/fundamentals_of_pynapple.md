@@ -14,15 +14,17 @@ kernelspec:
 ```{code-cell} ipython3
 %matplotlib inline
 ```
+
 :::{admonition} Download
-:class: important
+:class: important render-all
 
 This notebook can be downloaded as **{nb-download}`fundamentals_of_pynapple.ipynb`**. See the button at the top right to download as markdown or pdf.
-
 :::
 
 
 # Learning the fundamentals of pynapple
+
+<div class="render-all">
 
 ## Learning objectives
 
@@ -33,20 +35,38 @@ This notebook can be downloaded as **{nb-download}`fundamentals_of_pynapple.ipyn
 - Learn the core functions of pynapple
 - Extras : pynajax
 
-The pynapple documentation can be found [here](https://pynapple-org.github.io/pynapple/).
+</div>
+The pynapple documentation can be found [here](https://pynapple.org).
 
-The documentation for objects and method of the core of pynapple is [here](https://pynapple-org.github.io/pynapple/reference/core/).
+The documentation for objects and method of the core of pynapple is [here](https://pynapple.org/api.html).
 
 
 Let's start by importing the pynapple package and matplotlib to see if everything is correctly installed.
 If an import fails, you can do `!pip install pynapple matplotlib` in a cell to fix it.
 
+<div class="render-user">
+this is a test user
+</div>
+<div class="render-presenter">
+this is a test PRESENTER
+</div>
+
+<div class="render-user">
 ```{code-cell} ipython3
+print('only for users')
+```
+</div>
+
+```{code-cell} ipython3
+:tags: [render-all]
 import pynapple as nap
 import matplotlib.pyplot as plt
 import numpy as np
 ```
 
+:::{note}
+Look at this note!
+:::
 For this notebook we will work with fake data. The following cells generate a set of variables that we will use to create the different pynapple objects.
 
 
@@ -363,7 +383,7 @@ If not, please ask a TA.
 
 
 ```{code-cell} ipython3
-import nemos as nmo
-path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
+import workshop_utils
+path = workshop_utils.fetch_data("Mouse32-140822.nwb")
 print(path)
 ```

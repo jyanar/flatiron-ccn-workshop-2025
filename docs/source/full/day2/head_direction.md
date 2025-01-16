@@ -39,7 +39,7 @@ warnings.filterwarnings(
 ```
 
 :::{admonition} Download
-:class: important
+:class: important render-all
 
 This notebook can be downloaded as **{nb-download}`head_direction.ipynb`**. See the button at the top right to download as markdown or pdf.
 
@@ -77,7 +77,7 @@ plt.style.use(nmo.styles.plot_style)
 Here we load the data from OSF. The data is a NWB file.
 
 ```{code-cell} ipython3
-path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
+path = workshop_utils.fetch_data("Mouse32-140822.nwb")
 ```
 
 ## Pynapple
