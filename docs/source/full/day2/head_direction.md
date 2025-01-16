@@ -260,7 +260,6 @@ epoch_one_spk = nap.IntervalSet(
 )
 ```
 
-
 #### Features Construction
 Let's fix the spike history window size that we will use as predictor.
 
@@ -315,7 +314,6 @@ history_basis = nmo.basis.HistoryConv(window_size)
 
 # create the feature matrix
 input_feature = history_basis.compute_features(neuron_count)
-
 ```
 
 <div class="notes">
@@ -333,7 +331,6 @@ dimension are matching our expectation
 <div class="notes">
 - Check the shape of the counts and features.
 </div>
-
 
 ```{code-cell} ipython3
 print(f"Time bins in counts: {neuron_count.shape[0]}")
@@ -416,8 +413,13 @@ model.fit(
 ```{code-cell} ipython3
 # KEEP-CODE
 
-workshop_utils.plotting.plot_and_compare_weights(
-    [model.coef_], ["GLM raw history 1st Half"], count.rate)
+plt.figure()
+plt.title("Spike History Weights")
+plt.plot(np.arange(window_size) / count.rate, np.squeeze(model.coef_), lw=2, label="GLM raw history 1st Half")
+plt.axhline(0, color="k", lw=0.5)
+plt.xlabel("Time From Spike (sec)")
+plt.ylabel("Kernel")
+plt.legend()
 ```
 
 The response in the previous figure seems noise added to a decay, therefore the response
@@ -445,13 +447,19 @@ model_second_half.fit(
 - Compare results.
 </div>
 
-```
+```{code-cell} ipython3
 # KEEP-CODE
 
-workshop_utils.plotting.plot_and_compare_weights(
-    [model.coef_, model_second_half.coef_],
-    ["GLM raw history 1st Half", "GLM raw history 2nd Half"],
-    count.rate)
+plt.figure()
+plt.title("Spike History Weights")
+plt.plot(np.arange(window_size) / count.rate, np.squeeze(model.coef_),
+         label="GLM raw history 1st Half", lw=2)
+plt.plot(np.arange(window_size) / count.rate,  np.squeeze(model_second_half.coef_),
+         color="orange", label="GLM raw history 2nd Half", lw=2)
+plt.axhline(0, color="k", lw=0.5)
+plt.xlabel("Time From Spike (sec)")
+plt.ylabel("Kernel")
+plt.legend()
 ```
 
 What can we conclude?
@@ -580,12 +588,11 @@ basis function, and sum them.
 </div>
 
 ```{code-cell} ipython3
-
 # get the basis function kernels
-basis_kernels = basis.evaluate_on_grid(window_size)
+_, basis_kernels = basis.evaluate_on_grid(window_size)
 
 # multiply with the weights
-self_connection = np.matmul(basis_kernels, np.squeeze(model_basis.coef_))
+self_connection = np.matmul(basis_kernels, model_basis.coef_)
 
 print(self_connection.shape)
 ```
@@ -624,11 +631,17 @@ And plot the results.
 ```{code-cell} ipython3
 # KEEP-CODE
 
-workshop_utils.plotting.plot_and_compare_weights(
-    [model.coef_, model_second_half.coef_, self_connection, self_connection_second_half],
-    ["GLM raw history 1st Half", "GLM raw history 2nd half", "GLM basis 1st half", "GLM basis 2nd half"],
-    count.rate
-)
+time = np.arange(window_size) / count.rate
+plt.figure()
+plt.title("Spike History Weights")
+plt.plot(time, np.squeeze(model.coef_), "k", alpha=0.3, label="GLM raw history 1st half")
+plt.plot(time, np.squeeze(model_second_half.coef_), alpha=0.3, color="orange", label="GLM raw history 2nd half")
+plt.plot(time, self_connection, "--k", lw=2, label="GLM basis 1st half")
+plt.plot(time, self_connection_second_half, color="orange", lw=2, ls="--", label="GLM basis 2nd half")
+plt.axhline(0, color="k", lw=0.5)
+plt.xlabel("Time from spike (sec)")
+plt.ylabel("Weight")
+plt.legend()
 ```
 
 Let's extract the firing rate.
@@ -641,7 +654,6 @@ Let's extract the firing rate.
 ```{code-cell} ipython3
 rate_basis = model_basis.predict(conv_spk) * conv_spk.rate
 rate_history = model.predict(input_feature) * conv_spk.rate
-
 ```
 
 And plot it.
@@ -650,7 +662,8 @@ And plot it.
 - Plot the results.
 </div>
 
-```
+```{code-cell} ipython3
+
 ep = nap.IntervalSet(start=8819.4, end=8821)
 # plot the rates
 doc_plots.plot_rates_and_smoothed_counts(
@@ -658,6 +671,7 @@ doc_plots.plot_rates_and_smoothed_counts(
     {"Self-connection raw history":rate_history, "Self-connection bsais": rate_basis}
 );
 ```
+
 
 ### All-to-all Connectivity
 The same approach can be applied to the whole population. Now the firing rate of a neuron
@@ -795,6 +809,7 @@ weights_dict = basis.split_by_feature(model.coef_, axis=0)
 weights = weights_dict["RaisedCosineLogConv"]
 print(f"Re-shaped coeff: {weights.shape}")
 ```
+
 <div class="notes">
 - The shape is `(sender_neuron, num_basis, receiver_neuron)`.
 - Multiply the weights with the kernels with: `np.einsum("jki,tk->ijt", weights, basis_kernels)`.
