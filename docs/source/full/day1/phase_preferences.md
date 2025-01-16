@@ -11,9 +11,16 @@ kernelspec:
   name: python3
 ---
 
+:::{admonition} Download
+:class: important
 
-Spikes-phase coupling
-=====================
+This notebook can be downloaded as **{nb-download}`phase_preferences.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
+
+
+
+# Spikes-phase coupling
 
 In this tutorial we will learn how to isolate phase information using band-pass filtering and combine it
 with spiking data, to find phase preferences of spiking units.

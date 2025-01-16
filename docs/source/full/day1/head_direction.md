@@ -11,9 +11,15 @@ kernelspec:
   name: python3
 ---
 
+:::{admonition} Download
+:class: important
 
-Analysing head-direction cells
-============
+This notebook can be downloaded as **{nb-download}`head_direction.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
+
+
+# Analysing head-direction cells
 
 This tutorial demonstrates how we use Pynapple to generate Figure 4a in the [publication](https://elifesciences.org/reviewed-preprints/85786).
 The NWB file for the example is hosted on [OSF](https://osf.io/jb2gd). We show below how to stream it.

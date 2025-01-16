@@ -14,6 +14,13 @@ kernelspec:
 ```{code-cell} ipython3
 %matplotlib inline
 ```
+:::{admonition} Download
+:class: important
+
+This notebook can be downloaded as **{nb-download}`fundamentals_of_pynapple.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
+
 
 # Learning the fundamentals of pynapple
 

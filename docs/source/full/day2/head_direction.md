@@ -17,14 +17,12 @@ kernelspec:
 %matplotlib inline
 import warnings
 
-# Ignore the first specific warning
 warnings.filterwarnings(
     "ignore",
     message="plotting functions contained within `_documentation_utils` are intended for nemos's documentation.",
     category=UserWarning,
 )
 
-# Ignore the second specific warning
 warnings.filterwarnings(
     "ignore",
     message="Ignoring cached namespace 'core'",
@@ -39,6 +37,13 @@ warnings.filterwarnings(
     category=RuntimeWarning,
 )
 ```
+
+:::{admonition} Download
+:class: important
+
+This notebook can be downloaded as **{nb-download}`head_direction.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
 
 (head-direction-tutorial)=
 # Fit head-direction population
@@ -571,7 +576,6 @@ doc_plots.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate,
 Let's see if our firing rate predictions improved and in what sense.
 
 ```{code-cell} ipython3
-# mkdocs_gallery_thumbnail_number = 2
 fig = doc_plots.plot_rates_and_smoothed_counts(
     neuron_count,
     {"Self-connection: raw history": rate_history,
