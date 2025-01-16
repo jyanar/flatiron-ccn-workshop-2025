@@ -30,7 +30,7 @@ pipeline {
               source $HOME/bin/activate
               pip install -U pip
               pip install .
-              python src/workshop_utils/fetch.py
+              NEMOS_DATA_DIR=./data/ python src/workshop_utils/fetch.py
               bash ./scripts/strip_text.sh
               make -C docs html O="-T"
               
