@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import requests, math, os
 import tqdm
+import nemos as nmo
 
 custom_params = {"axes.spines.right": False, "axes.spines.top": False}
 sns.set_theme(style="ticks", palette="colorblind", font_scale=1.5, rc=custom_params)
@@ -44,18 +45,11 @@ sns.set_theme(style="ticks", palette="colorblind", font_scale=1.5, rc=custom_par
 Downloading the data
 ------------------
 
-It's a small NWB file.
+It's a small NWB file that we can download using NeMoS `fetch_data`.
 
 
 ```{code-cell} ipython3
-path = "Mouse32-140822.nwb"
-if path not in os.listdir("."):
-    r = requests.get(f"https://osf.io/jb2gd/download", stream=True)
-    block_size = 1024*1024
-    with open(path, 'wb') as f:
-        for data in tqdm.tqdm(r.iter_content(block_size), unit='MB', unit_scale=True,
-            total=math.ceil(int(r.headers.get('content-length', 0))//block_size)):
-            f.write(data)
+path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
 ```
 
 ***
