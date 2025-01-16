@@ -70,3 +70,4 @@ html_theme_options = {
         },
     ],
 }
+nb_execution_excludepatterns = ['*model_selection*', '*stripped*']

@@ -17,14 +17,12 @@ kernelspec:
 %matplotlib inline
 import warnings
 
-# Ignore the first specific warning
 warnings.filterwarnings(
     "ignore",
     message="plotting functions contained within `_documentation_utils` are intended for nemos's documentation.",
     category=UserWarning,
 )
 
-# Ignore the second specific warning
 warnings.filterwarnings(
     "ignore",
     message="Ignoring cached namespace 'core'",
@@ -39,6 +37,13 @@ warnings.filterwarnings(
     category=RuntimeWarning,
 )
 ```
+
+:::{admonition} Download
+:class: important
+
+This notebook can be downloaded as **{nb-download}`current_injection.ipynb`**. See the button at the top right to download as markdown or pdf.
+
+:::
 
 # Fit injected current
 
