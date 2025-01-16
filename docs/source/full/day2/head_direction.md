@@ -206,10 +206,9 @@ Let's plot the preferred heading
 </div>
 
 ```{code-cell} ipython3
-fig = workshop_utils.plot_head_direction_tuning_model(
 :tags: [render-all]
 
-fig = doc_plots.plot_head_direction_tuning(
+fig = workshop_utils.plot_head_direction_tuning_model(
     tuning_curves, spikes, angle, threshold_hz=1, start=8910, end=8960
 )
 ```
