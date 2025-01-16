@@ -12,12 +12,11 @@ kernelspec:
 ---
 
 :::{admonition} Download
-:class: important
+:class: important render-all
 
 This notebook can be downloaded as **{nb-download}`phase_preferences.ipynb`**. See the button at the top right to download as markdown or pdf.
 
 :::
-
 
 
 # Spikes-phase coupling
@@ -46,9 +45,7 @@ sns.set_theme(style="ticks", palette="colorblind", font_scale=1.5, rc=custom_par
 
 ```
 
-***
-Downloading the data
-------------------
+## Downloading the data
 Let's download the data and save it locally
 
 
@@ -67,9 +64,7 @@ if path not in os.listdir("."):
             f.write(data)
 ```
 
-***
-Loading the data
-------------------
+## Loading the data
 Let's load and print the full dataset.
 
 
@@ -79,9 +74,7 @@ FS = 1250  # We know from the methods of the paper
 print(data)
 ```
 
-***
-Selecting slices
------------------------------------
+## Selecting slices
 For later visualization, we define an interval of 3 seconds of data during REM sleep.
 
 
@@ -103,9 +96,7 @@ tsd_rem = data["eeg"][:,0].restrict(data["rem"])
 spikes = data["units"].restrict(data["rem"])
 ```
 
-***
-Plotting the LFP Activity
------------------------------------
+## Plotting the LFP Activity
 We should first plot our REM Local Field Potential data.
 
 
@@ -117,9 +108,7 @@ ax.set_ylabel("LFP (a.u.)")
 ax.set_xlabel("time (s)")
 ```
 
-***
-Getting the Wavelet Decomposition
------------------------------------
+## Getting the Wavelet Decomposition
 As we would expect, it looks like we have a very strong theta oscillation within our data
 - this is a common feature of REM sleep. Let's perform a wavelet decomposition,
 as we did in the last tutorial, to see get a more informative breakdown of the
@@ -170,9 +159,7 @@ ax1.set_xlabel("Time (s)")
 ax1.margins(0)
 ```
 
-***
-Filtering Theta
----------------
+## Filtering Theta
 
 As expected, there is a strong 8Hz component during REM sleep. We can filter it using the function `nap.apply_bandpass_filter`.
 
@@ -192,9 +179,7 @@ plt.xlabel("Time (s)")
 plt.show()
 ```
 
-***
-Computing phase
----------------
+## Computing phase
 
 From the filtered signal, it is easy to get the phase using the Hilbert transform. Here we use scipy Hilbert method.
 
@@ -220,9 +205,7 @@ plt.xlabel("Time (s)")
 plt.show()
 ```
 
-***
-Finding Phase of Spikes
------------------------
+## Finding Phase of Spikes
 Now that we have the phase of our theta wavelet, and our spike times, we can find the phase firing preferences
 of each of the units using the `compute_1d_tuning_curves` function.
 

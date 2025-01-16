@@ -12,10 +12,9 @@ kernelspec:
 ---
 
 :::{admonition} Download
-:class: important
+:class: important render-all
 
 This notebook can be downloaded as **{nb-download}`head_direction.ipynb`**. See the button at the top right to download as markdown or pdf.
-
 :::
 
 
@@ -36,25 +35,22 @@ import seaborn as sns
 import requests, math, os
 import tqdm
 import nemos as nmo
+import workshop_utils
 
 custom_params = {"axes.spines.right": False, "axes.spines.top": False}
 sns.set_theme(style="ticks", palette="colorblind", font_scale=1.5, rc=custom_params)
 ```
 
-***
-Downloading the data
-------------------
+## Downloading the data
 
 It's a small NWB file that we can download using NeMoS `fetch_data`.
 
 
 ```{code-cell} ipython3
-path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
+path = workshop_utils.fetch_data("Mouse32-140822.nwb")
 ```
 
-***
-Parsing the data
-------------------
+## Parsing the data
 
 The first step is to load the data and other relevant variables of interest
 
@@ -70,9 +66,7 @@ What does this look like ?
 print(data)
 ```
 
-***
-Head-Direction Tuning Curves
-------------------
+## Head-Direction Tuning Curves
 
 To plot Head-Direction Tuning curves, we need the spike timings and the orientation of the animal. These quantities are stored in the variables 'units' and 'ry'.
 
@@ -186,9 +180,7 @@ Awesome!
 
 +++
 
-***
-Decoding
-------------------
+## Decoding
 
 Now that we have HD tuning curves, we can go one step further. Using only the population activity of ADn units, we can decode the direction the animal is looking in. We will then compare this to the real head direction of the animal, and discover that population activity in the ADn indeed codes for HD.
 
