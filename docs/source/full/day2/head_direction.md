@@ -50,18 +50,18 @@ This notebook can be downloaded as **{nb-download}`head_direction.ipynb`**. See 
 
 ## Learning objectives
 
-- Learn how to add history-related predictors to NeMoS GLM
-- Learn about NeMoS [`Basis`](nemos_basis) objects
-- Learn how to use [`Basis`](nemos_basis) objects with convolution
+- Include history-related predictors to NeMoS GLM.
+- Reduce over-fitting with `Basis`.
+- Learn functional connectivity.
 
-<div class="render-all">
+<div class="render-user">
 - Include history-related predictors to NeMoS GLM.
 - Reduce over-fitting with `Basis`.
 - Learn functional connectivity.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -84,12 +84,12 @@ plt.style.use(nmo.styles.plot_style)
 
 Here we load the data from OSF. The data is a NWB file.
 
-<div class="render-all">
+<div class="render-user">
 - Fetch the data.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 path = workshop_utils.fetch.fetch_data("Mouse32-140822.nwb")
 ```
@@ -97,12 +97,12 @@ path = workshop_utils.fetch.fetch_data("Mouse32-140822.nwb")
 ## Pynapple
 We are going to open the NWB file with pynapple.
 
-<div class="render-all">
+<div class="render-user">
 - `load_file` : open the NWB file and give a preview.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 data = nap.load_file(path)
 
@@ -111,12 +111,12 @@ data
 
 Get spike timings
 
-<div class="render-all">
+<div class="render-user">
 - Load the units
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 spikes = data["units"]
 
@@ -125,12 +125,12 @@ spikes
 
 Get the behavioural epochs (in this case, sleep and wakefulness)
 
-<div class="render-all">
+<div class="render-user">
 - Load the epochs and take only wakefulness
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 epochs = data["epochs"]
 wake_epochs = epochs[epochs.tags == "wake"]
@@ -138,23 +138,25 @@ wake_epochs = epochs[epochs.tags == "wake"]
 
 Get the tracked orientation of the animal
 
-<div class="render-all">
+<div class="render-user">
 - Load the angular head-direction of the animal (in radians)
 </div>
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 angle = data["ry"]
 ```
 
 This cell will restrict the data to what we care about i.e. the activity of head-direction neurons during wakefulness.
 
-<div class="render-all">
+<div class="render-user">
 - Select only those units that are in ADn
 - Restrict the activity to wakefulness (both the spiking activity and the angle)
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 spikes = spikes[spikes.location == "adn"]
 
@@ -164,12 +166,12 @@ angle = angle.restrict(wake_epochs)
 
 First let's check that they are head-direction neurons.
 
-<div class="render-all">
+<div class="render-user">
 - Compute tuning curves as a function of head-direction
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 tuning_curves = nap.compute_1d_tuning_curves(
     group=spikes, feature=angle, nb_bins=61, minmax=(0, 2 * np.pi)
@@ -179,12 +181,12 @@ tuning_curves = nap.compute_1d_tuning_curves(
 Each row indicates an angular bin (in radians), and each column corresponds to a single unit.
 Let's plot the tuning curve of the first two neurons.
 
-<div class="render-all">
+<div class="render-user">
 - Plot the tuning curves.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 fig, ax = plt.subplots(1, 2, figsize=(12, 4))
 ax[0].plot(tuning_curves.iloc[:, 0])
@@ -199,12 +201,12 @@ Before using NeMoS, let's explore the data at the population level.
 
 Let's plot the preferred heading
 
-<div class="render-all">
+<div class="render-user">
 - Let's visualize the data at the population level.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 fig = doc_plots.plot_head_direction_tuning(
     tuning_curves, spikes, angle, threshold_hz=1, start=8910, end=8960
@@ -212,11 +214,12 @@ fig = doc_plots.plot_head_direction_tuning(
 ```
 
 As we can see, the population activity tracks very well the current head-direction of the animal.
+
 **Question : are neurons constantly tuned to head-direction and can we use it to predict the spiking activity of each neuron based only on the activity of other neurons?**
 
-To fit the GLM faster, we will use only the first 3 min of wake
+To fit the GLM faster, we will use only the first 3 min of wake.
 
-<div class="render-all">
+<div class="render-user">
 - Define a `wake_ep` IntervalSet with the first 3 minutes of wakefulness (to speed up model fitting).
 </div>
 
@@ -232,9 +235,9 @@ wake_ep = nap.IntervalSet(
 )
 ```
 
-To use the GLM, we need first to bin the spike trains. Here we use pynapple
+To use the GLM, we need first to bin the spike trains. Here we use pynapple.
 
-<div class="render-all">
+<div class="render-user">
 - bin the spike trains in 10 ms bin (`count = ...`).
 </div>
 
@@ -252,7 +255,7 @@ count = spikes.count(bin_size, ep=wake_ep)
 
 Here we are going to rearrange neurons order based on their preferred directions.
 
-<div class="render-all">
+<div class="render-user">
 - sort the neurons by their preferred direction using pandas:
     - Preferred angle:  `pref_ang = tuning_curves.idxmax()`.
     - Define a new `count` TsdFrame, sorting the columns according to `pref_ang`.
@@ -281,9 +284,11 @@ This can be quantified with a GLM if we use the recent population spike history 
 ### Self-Connected Single Neuron
 To simplify our life, let's see first how we can model spike history effects in a single neuron.
 The simplest approach is to use counts in fixed length window $i$, $y_{t-i}, \dots, y_{t-1}$ to predict the next
-count $y_{t}$. Let's plot the count history,
+count $y_{t}$. 
 
-<div class="render-all">
+Before starting the analysis, let's select a neuron and a time window that we will use to visualize the model features.
+
+<div class="render-user">
 - Start with modeling a self-connected single neuron.
 - Select a neuron (call the variable `neuron_count`).
 - Select the first 1.2 seconds for visualization. (call the epoch `epoch_one_spk`).
@@ -311,13 +316,13 @@ epoch_one_spk = nap.IntervalSet(
 #### Features Construction
 Let's fix the spike history window size that we will use as predictor.
 
-<div class="render-all">
+<div class="render-user">
 - Fix a history window of 800ms (0.8 seconds).
 - Plot the result using `doc_plots.plot_history_window`
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 # set the size of the spike history window in seconds
 window_size_sec = 0.8
@@ -329,13 +334,13 @@ For each time point, we shift our window one bin at the time and vertically stac
 Each row of the matrix will be used as the predictors for the rate in the next bin (red narrow rectangle in
 the figure).
 
-<div class="render-all">
+<div class="render-user">
 - By shifting the time window we can predict new count bins.
 - Concatenating all the shifts, we form our feature matrix.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 doc_plots.run_animation(neuron_count, epoch_one_spk.start[0])
 ```
@@ -347,7 +352,7 @@ time-points;
 
 You can construct this feature matrix with the [`HistoryConv`](https://nemos--282.org.readthedocs.build/en/282/generated/basis/nemos.basis.HistoryConv.html#nemos.basis.HistoryConv) basis.
 
-<div class="render-all">
+<div class="render-user">
 - This is equivalent to convolving `count` with an identity matrix.
 - That's what NeMoS `HistoryConv` basis is for: 
     - Convert the window size in number of bins (call it `window_size`)
@@ -369,29 +374,27 @@ input_feature =
 ```{code-cell} ipython3
 # convert the prediction window to bins (by multiplying with the sampling rate)
 window_size = int(window_size_sec * neuron_count.rate)
-
 # define the history bases
 history_basis = nmo.basis.HistoryConv(window_size)
-
 # create the feature matrix
 input_feature = history_basis.compute_features(neuron_count)
 ```
 
-<div class="render-all">
+<div class="render-user">
 - NeMoS NaN pads if there aren't enough samples to predict the counts. 
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 # print the NaN indices along the time axis
-print("NaN indices:\n", np.where(np.isnan(input_feature[:, 0]))[0])
+print("NaN indices:\n", np.where(np.isnan(input_feature[:, 0]))[0]) 
 ```
 
 The binned counts originally have shape "number of samples", we should check that the
 dimension are matching our expectation
 
-<div class="render-all">
+<div class="render-user">
 - Check the shape of the counts and features.
 </div>
 
@@ -404,12 +407,12 @@ print(f"Feature shape: {input_feature.shape}")
 
 We can visualize the output for a few time bins
 
-<div class="render-all">
+<div class="render-user">
 - Plot the convolution output with `workshop_utils.plot_features`.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 suptitle = "Input feature: Count History"
 neuron_id = 0
 workshop_utils.plot_features(input_feature, count.rate, suptitle);
@@ -436,26 +439,28 @@ choice if the statistics of the neural activity does not change during the cours
 the recording. We will learn about better cross-validation strategies with other
 examples.
 
-<div class="render-all">
+<div class="render-user">
 - Split your epochs in two for validation purposes:
     - Define two `IntervalSet`s, each with half of the `input_feature.time_support` duration
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 # construct the train and test epochs
 duration = input_feature.time_support.tot_length("s")
 start = input_feature.time_support["start"]
 end = input_feature.time_support["end"]
+
+# define the interval sets
 first_half = nap.IntervalSet(start, start + duration / 2)
 second_half = nap.IntervalSet(start + duration / 2, end)
 ```
 
-Fit the glm to the first half of the recording and visualize the ML weights.
+Fit the glm to the first half of the recording and visualize the maximum likelihood weights.
 
-<div class="render-all">
-- Fit a GLM to the first half. (Call it `model`).
+<div class="render-user">
+- Fit a GLM to the first half. 
 </div>
 
 <div class="render-user">
@@ -477,12 +482,12 @@ model.fit(
 )
 ```
 
-<div class="render-all">
+<div class="render-user">
 - Plot the weights (`model.coef_`).
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 plt.figure()
 plt.title("Spike History Weights")
@@ -500,8 +505,8 @@ If we are correct, what would happen if we re-fit the weights on the other half 
 
 #### Inspecting the results
 
-<div class="render-all">
-- Fit on the other half. (Call it `model_second_half`)
+<div class="render-user">
+- Fit on the other half.
 </div>
 
 <div class="render-user">
@@ -521,12 +526,12 @@ model_second_half.fit(
 )
 ```
 
-<div class="render-all">
+<div class="render-user">
 - Compare results.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 plt.figure()
 plt.title("Spike History Weights")
@@ -556,12 +561,12 @@ Let's see how to use NeMoS' `basis` module to reduce dimensionality and avoid ov
 For history-type inputs, we'll use again the raised cosine log-stretched basis,
 [Pillow et al., 2005](https://www.jneurosci.org/content/25/47/11003).
 
-<div class="render-all">
+<div class="render-user">
 - Visualize the raised cosine basis.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 doc_plots.plot_basis();
 ```
@@ -576,7 +581,7 @@ for now we'll give you a decent choice.
 
 We can initialize the `RaisedCosineLogConv` by providing the number of basis functions and the window size for the convolution. With more basis functions, we'll be able to represent the effect of the corresponding input with the higher precision, at the cost of adding additional parameters.
 
-<div class="render-all">
+<div class="render-user">
 - Define the basis `RaisedCosineLogConv`and name it `basis`. 
 - Basis parameters:
     - 8 basis functions.
@@ -609,7 +614,7 @@ Let's see our basis in action. We can "compress" spike history feature by convol
 with the counts (without creating the large spike history feature matrix).
 This can be performed in NeMoS by calling the `compute_features` method of basis.
 
-<div class="render-all">
+<div class="render-user">
 - Convolve the counts with the basis functions. (Call the output `conv_spk`)
 - Print the shape of `conv_spk` and compare it to `input_feature`.
 </div>
@@ -635,12 +640,12 @@ print(f"Compressed count history as feature: {conv_spk.shape}")
 
 Let’s focus on two small time windows and visualize the features, which result from convolving the counts with the basis elements.
 
-<div class="render-all">
+<div class="render-user">
 - Visualize the output.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 # Visualize the convolution results
 epoch_one_spk = nap.IntervalSet(8917.5, 8918.5)
@@ -654,7 +659,7 @@ Now that we have our "compressed" history feature matrix, we can fit the ML para
 
 #### Fit and compare the models
 
-<div class="render-all">
+<div class="render-user">
 - Fit the model using the compressed features. Call it `model_basis`.
 </div>
 
@@ -682,10 +687,10 @@ print(model_basis.coef_)
 In order to get the response we need to multiply the coefficients by their corresponding
 basis function, and sum them.
 
-<div class="render-all">
+<div class="render-user">
 - Reconstruct the history filter:
     - Extract the basis kernels with `_, basis_kernels = basis.evaluate_on_grid(window_size)`.
-    - Multiply the `basis_kernel` with the coefficient using `np.matmul` (call the result `self_connection`).
+    - Multiply the `basis_kernel` with the coefficient using `np.matmul`.
 - Check the shape of `self_connection`.
 </div>
 
@@ -712,7 +717,7 @@ print(self_connection.shape)
 Let's check if our new estimate does a better job in terms of over-fitting. We can do that
 by visual comparison, as we did previously. Let's fit the second half of the dataset.
 
-<div class="render-all">
+<div class="render-user">
 - Check if with less parameter we are not over-fitting.
 - Fit the other half of the data. Name it `model_basis_second_half`.
 </div>
@@ -731,7 +736,7 @@ model_basis_second_half = nmo.glm.GLM(solver_name="LBFGS").fit(
 
 Get the response filters.
 
-<div class="render-all">
+<div class="render-user">
 - Get the response filters: multiply the `basis_kernels` with the weights from `model_basis_second_half`.
 - Call the output `self_connection_second_half`.
 </div>
@@ -746,14 +751,14 @@ self_connection_second_half =
 self_connection_second_half = np.matmul(basis_kernels, model_basis_second_half.coef_)
 ```
 
-<div class="render-all">
+<div class="render-user">
 - Plot and compare the results.
 </div>
 
 And plot the results.
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 time = np.arange(window_size) / count.rate
 plt.figure()
@@ -770,7 +775,7 @@ plt.legend()
 
 Let's extract the firing rate.
 
-<div class="render-all">
+<div class="render-user">
 - Predict the rates from `model` and `model_basis`. Call it `rate_history` and `rate_basis`.
 - Convert the rate from spike/bin to spike/sec by multiplying with `conv_spk.rate`.
 </div>
@@ -782,12 +787,12 @@ rate_history = model.predict(input_feature) * conv_spk.rate
 
 And plot it.
 
-<div class="render-all">
+<div class="render-user">
 - Plot the results.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 ep = nap.IntervalSet(start=8819.4, end=8821)
 # plot the rates
@@ -806,7 +811,7 @@ to get an array of predictors of shape, `(num_time_points, num_neurons * num_bas
 
 #### Preparing the features
 
-<div class="render-all">
+<div class="render-user">
 - Set the basis input shape to the number of neurons.
 - Convolve all counts. Call the output in `convolved_count`.
 - Print the output shape
@@ -849,7 +854,7 @@ of individual neurons. Maximizing the sum (i.e. the population log-likelihood) i
 maximizing each individual term separately (i.e. fitting one neuron at the time).
 :::
 
-<div class="render-all">
+<div class="render-user">
 - Fit a `PopulationGLM`, call the object `model`
 - Use Ridge regularization with a `regularizer_strength=0.1`
 - Print the shape of the estimated coefficients.
@@ -868,7 +873,7 @@ print(f"Model coefficients shape: {model.coef_.shape}")
 #### Comparing model predictions.
 Predict the rate (counts are already sorted by tuning prefs)
 
-<div class="render-all">
+<div class="render-user">
 - Predict the firing rate of each neuron. Call it `predicted_firing_rate`.
 - Convert the rate from spike/bin to spike/sec.
 </div>
@@ -879,12 +884,12 @@ predicted_firing_rate = model.predict(convolved_count) * conv_spk.rate
 
 Plot fit predictions over a short window not used for training.
 
-<div class="render-all">
+<div class="render-user">
 - Visualize the predicted rate and tuning function.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 # use pynapple for time axis for all variables plotted for tick labels in imshow
 doc_plots.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes, angle, threshold_hz=1,
@@ -893,12 +898,12 @@ doc_plots.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate,
 
 Let's see if our firing rate predictions improved and in what sense.
 
-<div class="render-all">
+<div class="render-user">
 - Visually compare all the models.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 
 fig = doc_plots.plot_rates_and_smoothed_counts(
     neuron_count,
@@ -911,7 +916,7 @@ fig = doc_plots.plot_rates_and_smoothed_counts(
 #### Visualizing the connectivity
 Compute the tuning curve form the predicted rates.
 
-<div class="render-all">
+<div class="render-user">
 - Compute tuning curves from the predicted rates using pynapple.
 - Store the output of pynapple in a single variable, call it `tuning `.
 </div>
@@ -925,17 +930,46 @@ tuning = nap.compute_1d_tuning_curves_continuous(predicted_firing_rate,
 
 Extract the weights and store it in a `(n_neurons, n_neurons, n_basis_funcs)` array. 
 
-You can use the `split_by_feature` method of `basis` for this. 
-
-<div class="render-all">
-- Extract the weights:
-    - Use `basis.split_by_feature` (returns a dictionary).
-    - Get the weight array from the dictionary (and call the output `weights`). 
-    - Print the weights shape.
+<div class="render-user">
+- Check the shape of the weights.
 </div>
 
 ```{code-cell} ipython3
+
+# original shape of the weights
 print(f"GLM coeff: {model.coef_.shape}")
+```
+
+You can use the `split_by_feature` method of `basis` for this. 
+
+<div class="render-user">
+- Reshape the weights with `basis.split_by_feature` (returns a dictionary).
+</div>
+
+<div class="render-user">
+```{code-cell} ipython3
+# split the coefficient vector along the feature axis (axis=0)
+weights_dict =
+# visualize the content
+weights_dict
+```
+</div>
+
+<div class="render-user">
+- Get the weight array from the dictionary (and call the output `weights`). 
+- Print the new shape of the weights.
+</div>
+
+<div class="render-user">
+```{code-cell} ipython3
+# get the coefficients
+weights = 
+# print the shape
+print(
+```
+</div>
+
+```{code-cell} ipython3
 # split the coefficient vector along the feature axis (axis=0)
 weights_dict = basis.split_by_feature(model.coef_, axis=0)
 
@@ -945,7 +979,7 @@ weights = weights_dict["RaisedCosineLogConv"]
 print(f"Re-shaped coeff: {weights.shape}")
 ```
 
-<div class="render-all">
+<div class="render-user">
 - The shape is `(sender_neuron, num_basis, receiver_neuron)`.
 - Multiply the weights with the kernels with: `np.einsum("jki,tk->ijt", weights, basis_kernels)`.
 - Call the output `responses` and print its shape.
@@ -962,12 +996,12 @@ print(responses.shape)
 Finally, we can visualize the pairwise interactions by plotting
 all the coupling filters.
 
-<div class="render-all">
+<div class="render-user">
 - Plot the connectivity map.
 </div>
 
 ```{code-cell} ipython3
-:tags:[render-all]
+:tags: [render-all]
 fig = doc_plots.plot_coupling(responses, tuning)
 ```
 
