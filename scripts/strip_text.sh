@@ -40,11 +40,14 @@ for f in docs/source/full/*/*md; do
     ipynb="${md/.md/.ipynb}"
     stripped_ipynb="${ipynb/.ipynb/-stripped.ipynb}"
     TITLE="$(grep '^# ' $f | head -1)"
+
+    # Process file with sed
     sed -E -n -e '/^#/p' -e '/\{code-cell\}|:::/,/```|:::/p' -e '/<div class=.render/,/div>/p' "$f" > "$out_f"
-    sed -i 's/.*div.*/\n/g' "$out_f"
-    sed -i "s/${ipynb}/${stripped_ipynb}/g" "$out_f"
-    sed -i "s/${TITLE}/${TITLE}, Text Removed\n${STRIP_TEXT_EXPLAIN}(..\/..\/full\/${dir}\/${md})\n/g" "$out_f"
-    sed -i "1s/^/${HEADER}/g" "$out_f"
+    sed -i '' 's/.*div.*/\n/g' "$out_f"   # Note the '' for macOS sed
+    sed -i '' "s/${ipynb}/${stripped_ipynb}/g" "$out_f"
+    sed -i '' "s/${TITLE}/${TITLE}, Text Removed\n${STRIP_TEXT_EXPLAIN}(..\/..\/full\/${dir}\/${md})\n/g" "$out_f"
+    sed -i '' "1s/^/${HEADER}/g" "$out_f"
+
     cp "$out_f" tmp.md
     uniq tmp.md > "$out_f"
     rm tmp.md
