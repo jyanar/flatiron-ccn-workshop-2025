@@ -81,7 +81,7 @@ nap.nap_config.suppress_conversion_warnings = True
 Here we load the data from OSF. The data is a NWB file.
 
 ```{code-cell} ipython3
-path = workshop_utils.fetch_data("Achilles_10252013.nwb")
+path = workshop_utils.fetch_data("Achilles_10252013_EEG.nwb")
 ```
 
 ## Pynapple
@@ -98,13 +98,12 @@ Let's extract the spike times, the position and the theta phase.
 ```{code-cell} ipython3
 spikes = data["units"]
 position = data["position"]
-theta = data["theta_phase"]
 ```
 
 The NWB file also contains the time at which the animal was traversing the linear track. We can use it to restrict the position and assign it as the `time_support` of position.
 
 ```{code-cell} ipython3
-position = position.restrict(data["trials"])
+position = position.restrict(data["forward_ep"])
 ```
 
 The recording contains both inhibitory and excitatory neurons. Here we will focus of the excitatory cells. Neurons have already been labelled before.
@@ -332,6 +331,7 @@ This gives the basis object the `transform` method. However, transformers have s
 
 ```{code-cell} ipython3
 :tags: [raises-exception]
+
 position_basis.transform(position)
 ```
 

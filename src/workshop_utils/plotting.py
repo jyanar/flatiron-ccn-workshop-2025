@@ -275,8 +275,10 @@ def plot_heatmap_cv_results(cv_df, facet_col=None,
         except KeyError:
             pass
     fig = sns.FacetGrid(cv_df, col=facet_col, height=5)
+    vmin = cv_df[values].min()
+    vmax = cv_df[values].max()
     fig.map_dataframe(facet_heatmap, index=rows, columns=columns, values=values,
-                      annot=True, square=True,
+                      annot=True, square=True, vmin=vmin, vmax=vmax,
                       linecolor="white", linewidth=0.5, fmt=fmt)
 
 
