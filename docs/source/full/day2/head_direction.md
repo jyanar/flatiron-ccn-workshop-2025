@@ -762,6 +762,11 @@ fig = doc_plots.plot_rates_and_smoothed_counts(
 #### Visualizing the connectivity
 Compute the tuning curve form the predicted rates.
 
+<div class="notes">
+- Compute tuning curves from the predicted rates using pynapple.
+- Store the output of pynapple in a single variable, call it `tuning `.
+</div>
+
 ```{code-cell} ipython3
 tuning = nap.compute_1d_tuning_curves_continuous(predicted_firing_rate,
                                                  feature=angle,
@@ -773,6 +778,13 @@ Extract the weights and store it in a `(n_neurons, n_neurons, n_basis_funcs)` ar
 
 You can use the `split_by_feature` method of `basis` for this. 
 
+<div class="notes">
+- Extract the weights:
+    - Use `basis.split_by_feature` (returns a dictionary).
+    - Get the weight array from the dictionary (and call the output `weights`). 
+    - Print the weights shape.
+</div>
+
 ```{code-cell} ipython3
 print(f"GLM coeff: {model.coef_.shape}")
 # split the coefficient vector along the feature axis (axis=0)
@@ -783,6 +795,11 @@ weights_dict = basis.split_by_feature(model.coef_, axis=0)
 weights = weights_dict["RaisedCosineLogConv"]
 print(f"Re-shaped coeff: {weights.shape}")
 ```
+<div class="notes">
+- The shape is `(sender_neuron, num_basis, receiver_neuron)`.
+- Multiply the weights with the kernels with: `np.einsum("jki,tk->ijt", weights, basis_kernels)`.
+- Call the output `responses` and print its shape.
+</div>
 
 Multiply the weights by the basis, to get the history filters.
 
@@ -795,7 +812,12 @@ print(responses.shape)
 Finally, we can visualize the pairwise interactions by plotting
 all the coupling filters.
 
+<div class="notes">
+- Plot the connectivity map.
+</div>
+
 ```{code-cell} ipython3
+# KEEP-CODE
 fig = doc_plots.plot_coupling(responses, tuning)
 ```
 
