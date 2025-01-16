@@ -49,6 +49,12 @@ warnings.filterwarnings(
 - Learn about NeMoS [`Basis`](nemos_basis) objects
 - Learn how to use [`Basis`](nemos_basis) objects with convolution
 
+<div class="render">
+- Include history-related predictors to NeMoS GLM.
+- Reduce over-fitting with `Basis`.
+- Learn functional connectivity.
+</div>
+
 ```{code-cell} ipython3
 import matplotlib.pyplot as plt
 import numpy as np
@@ -70,6 +76,10 @@ plt.style.use(nmo.styles.plot_style)
 ## Data Streaming
 
 Here we load the data from OSF. The data is a NWB file.
+
+<div class="render">
+- Stream data.
+</div>
 
 ```{code-cell} ipython3
 path = nmo.fetch.fetch_data("Mouse32-140822.nwb")
