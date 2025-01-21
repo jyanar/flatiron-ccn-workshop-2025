@@ -181,7 +181,7 @@ To assess the variabilty in speed when the animal is travering the linear track,
 fig=workshop_utils.plot_position_speed(position, speed, pf, tc_speed, neurons);
 ```
 
-This neurons show a strong modulation of firing rate as a function of speed but we can also notice that the animal, on average, accelerates when travering the field. Is the speed tuning we observe a true modulation or spurious correlation caused by traversing the place field at different speed and for different theta phase? We can use NeMoS to model the activity and give the position, the phase and the speed as input variable.
+These neurons show a strong modulation of firing rate as a function of speed but we can also notice that the animal, on average, accelerates when travering the field. Is the speed tuning we observe a true modulation or spurious correlation caused by traversing the place field at different speed and for different theta phase? We can use NeMoS to model the activity and give the position, the phase and the speed as input variable.
 
 We will use speed, phase and position to model the activity of the neuron.
 All the feature have already been brought to the same dimension thanks to `pynapple`.
