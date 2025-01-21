@@ -17,14 +17,12 @@ kernelspec:
 %matplotlib inline
 import warnings
 
-# Ignore the first specific warning
 warnings.filterwarnings(
     "ignore",
     message="plotting functions contained within `_documentation_utils` are intended for nemos's documentation.",
     category=UserWarning,
 )
 
-# Ignore the second specific warning
 warnings.filterwarnings(
     "ignore",
     message="Ignoring cached namespace 'core'",
@@ -39,6 +37,12 @@ warnings.filterwarnings(
     category=RuntimeWarning,
 )
 ```
+
+:::{admonition} Download
+:class: important render-all
+
+This notebook can be downloaded as **{nb-download}`current_injection.ipynb`**. See the button at the top right to download as markdown or pdf.
+:::
 
 # Fit injected current
 
@@ -92,6 +96,7 @@ import nemos as nmo
 
 # some helper plotting functions
 from nemos import _documentation_utils as doc_plots
+import workshop_utils
 
 # configure plots some
 plt.style.use(nmo.styles.plot_style)
@@ -122,7 +127,7 @@ On subsequent runs, the cell gets skipped: we do not need to redownload the
 data.
 
 ```{code-cell} ipython3
-path = nmo.fetch.fetch_data("allen_478498617.nwb")
+path = workshop_utils.fetch_data("allen_478498617.nwb")
 ```
 
 ## Pynapple
@@ -168,7 +173,7 @@ trial_interval_set
 ```
 
 `trial_interval_set` is an
-[`IntervalSet`](https://pynapple.org/generated/pynapple.core.interval_set.IntervalSet.html),
+[`IntervalSet`](https://pynapple.org/generated/pynapple.IntervalSet.html),
 with a metadata columns (`tags`) defining the stimulus protocol.
 
 ```{code-cell} ipython3
@@ -193,7 +198,7 @@ current
 ```
 
 `current` is a `Tsd`
-([TimeSeriesData](https://pynapple.org/generated/pynapple.core.time_series.Tsd.html))
+([TimeSeriesData](https://pynapple.org/generated/pynapple.Tsd.html))
 object with 2 columns. Like all `Tsd` objects, the first column contains the
 time index and the second column contains the data; in this case, the current
 in Ampere (A).
@@ -214,7 +219,7 @@ current
 Notice that the timestamps have changed and our shape is much smaller.
 
 Finally, let's examine the spike times. `spikes` is a
-[`TsGroup`](https://pynapple.org/generated/pynapple.core.ts_group.TsGroup.html#pynapple.core.ts_group.TsGroup),
+[`TsGroup`](https://pynapple.org/generated/pynapple.TsGroup.html),
 a dictionary-like object that holds multiple `Ts` (timeseries) objects with
 potentially different time indices:
 
@@ -258,7 +263,7 @@ ax.set_xlabel("Time (s)")
 
 Before using the Generalized Linear Model, or any model, it's worth taking
 some time to examine our data and think about what features are interesting
-and worth capturing. As we discussed in the [background](../../background/plot_00_conceptual_intro),
+and worth capturing. As Edoardo explained earlier today,
 the GLM is a model of the neuronal firing rate. However, in our experiments,
 we do not observe the firing rate, only the spikes! Moreover, neural
 responses are typically noisy&mdash;even in this highly controlled experiment
@@ -320,7 +325,7 @@ firing_rate = count.smooth(std=0.05, size_factor=20)
 firing_rate = firing_rate / bin_size
 ```
 
-Note that firing_rate is a [`Tsd`](https://pynapple.org/generated/pynapple.core.time_series.Tsd.html)!
+Note that firing_rate is a [`Tsd`](https://pynapple.org/generated/pynapple.Tsd.html)!
 
 ```{code-cell} ipython3
 print(type(firing_rate))
@@ -435,7 +440,7 @@ overhead!), as well as the collection of optimizers present in
 First, we require that our predictors and our spike counts have the same
 number of time bins. We can achieve this by down-sampling our current to the
 spike counts to the proper resolution using the
-[`bin_average`](https://pynapple.org/generated/pynapple.core.time_series.Tsd.bin_average.html#pynapple.core.time_series.Tsd.bin_average)
+[`bin_average`](https://pynapple.org/generated/pynapple.Tsd.bin_average.html)
 method from pynapple:
 
 ```{code-cell} ipython3
@@ -474,7 +479,7 @@ might wonder how the data should be shaped if you have more than one
 neuron.
 
 We will discuss this in more detail in the [following
-tutorial](plot_02_head_direction.md), but briefly: NeMoS has a separate
+tutorial](head_direction.md), but briefly: NeMoS has a separate
 [`PopulationGLM`](nemos.glm.PopulationGLM) object for fitting a population of
 neurons. It operates very similarly to the `GLM` object we use here: it still
 expects a 2d input, with neurons concatenated along the second dimension. (NeMoS

@@ -18,7 +18,11 @@ extensions = [
     'sphinx_copybutton',
     'sphinx_togglebutton',
     'sphinx_design',
+    'sphinx.ext.intersphinx'
 ]
+
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+intersphinx_mapping = {'nemos': ("https://nemos.readthedocs.io/en/latest/", None)}
 
 templates_path = []
 exclude_patterns = []
@@ -70,3 +74,6 @@ html_theme_options = {
         },
     ],
 }
+nb_execution_excludepatterns = ['*model_selection*', '*-users*', '*-presenters*']
+
+nb_execution_mode = "cache"
