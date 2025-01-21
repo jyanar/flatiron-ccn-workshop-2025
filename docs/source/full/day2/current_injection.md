@@ -44,7 +44,7 @@ warnings.filterwarnings(
 This notebook can be downloaded as **{nb-download}`current_injection.ipynb`**. See the button at the top right to download as markdown or pdf.
 :::
 
-# Fit injected current
+# Introduction to GLM
 
 For our first example, we will look at a very simple dataset: patch-clamp
 recordings from a single neuron in layer 4 of mouse primary visual cortex. This
@@ -84,6 +84,7 @@ review of what we went through yesterday. After we've explored the data some, we
 introduce the Generalized Linear Model and how to fit it with NeMoS.
 
 <div class="render-all">
+
 ## Learning objectives 
 
 - Learn how to explore spiking data and do basic analyses using pynapple
@@ -896,39 +897,27 @@ current history inputs without them (though the model won't do as well), or
 return to this example after you've learned about `Basis` objects and how to
 use them.
 
-<div class="render-all">
-
-## Citation
-
-The data used in this tutorial is from the **Allen Brain Map**, with the
-[following
-citation](https://knowledge.brain-map.org/data/1HEYEW7GMUKWIQW37BO/summary):
-
-**Contributors:** Agata Budzillo, Bosiljka Tasic, Brian R. Lee, Fahimeh
-Baftizadeh, Gabe Murphy, Hongkui Zeng, Jim Berg, Nathan Gouwens, Rachel
-Dalley, Staci A. Sorensen, Tim Jarsky, Uygar Sümbül Zizhen Yao
-
-**Dataset:** Allen Institute for Brain Science (2020). Allen Cell Types Database
--- Mouse Patch-seq [dataset]. Available from
-brain-map.org/explore/classes/multimodal-characterization.
-
-**Primary publication:** Gouwens, N.W., Sorensen, S.A., et al. (2020). Integrated
-morphoelectric and transcriptomic classification of cortical GABAergic cells.
-Cell, 183(4), 935-953.E19. https://doi.org/10.1016/j.cell.2020.09.057
-
-**Patch-seq protocol:** Lee, B. R., Budzillo, A., et al. (2021). Scaled, high
-fidelity electrophysiological, morphological, and transcriptomic cell
-characterization. eLife, 2021;10:e65482. https://doi.org/10.7554/eLife.65482
-
-**Mouse VISp L2/3 glutamatergic neurons:** Berg, J., Sorensen, S. A., Miller, J.,
-Ting, J., et al. (2021) Human neocortical expansion involves glutamatergic
-neuron diversification. Nature, 598(7879):151-158. doi:
-10.1038/s41586-021-03813-8
-
-</div>
 
 ## References
 
 [1] <span id="ref-1"><a href="https://arxiv.org/abs/2010.12362">Arribas, Diego, Yuan Zhao, and Il Memming Park. "Rescuing neural spike train models from bad MLE." Advances in Neural Information Processing Systems 33 (2020): 2293-2303.</a></span>
 
 [2] <a href="https://ieeexplore.ieee.org/document/8008426">Hocker, David, and Memming Park. "Multistep inference for generalized linear spiking models curbs runaway excitation." International IEEE/EMBS Conference on Neural Engineering, May 2017.</a>
+
+<div class="render-all">
+
+### Data citation
+
+The data used in this tutorial is from the **Allen Brain Map**, with the [following citation](https://knowledge.brain-map.org/data/1HEYEW7GMUKWIQW37BO/summary):
+
+**Contributors:** Agata Budzillo, Bosiljka Tasic, Brian R. Lee, Fahimeh Baftizadeh, Gabe Murphy, Hongkui Zeng, Jim Berg, Nathan Gouwens, Rachel Dalley, Staci A. Sorensen, Tim Jarsky, Uygar Sümbül Zizhen Yao
+
+**Dataset:** Allen Institute for Brain Science (2020). Allen Cell Types Database -- Mouse Patch-seq [dataset]. Available from brain-map.org/explore/classes/multimodal-characterization.
+
+**Primary publication:** Gouwens, N.W., Sorensen, S.A., et al. (2020). Integrated morphoelectric and transcriptomic classification of cortical GABAergic cells. Cell, 183(4), 935-953.E19. https://doi.org/10.1016/j.cell.2020.09.057
+
+**Patch-seq protocol:** Lee, B. R., Budzillo, A., et al. (2021). Scaled, high fidelity electrophysiological, morphological, and transcriptomic cell characterization. eLife, 2021;10:e65482. https://doi.org/10.7554/eLife.65482
+
+**Mouse VISp L2/3 glutamatergic neurons:** Berg, J., Sorensen, S. A., Miller, J., Ting, J., et al. (2021) Human neocortical expansion involves glutamatergic neuron diversification. Nature, 598(7879):151-158. doi: 10.1038/s41586-021-03813-8
+
+</div>
