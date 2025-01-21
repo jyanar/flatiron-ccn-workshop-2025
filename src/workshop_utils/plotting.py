@@ -11,7 +11,7 @@ from nemos import _documentation_utils as doc_plots
 
 __all__ = ["plot_features", "plot_head_direction_tuning_model", "plot_feature_mask",
            "plot_heatmap_cv_results", "plot_position_speed",
-           "plot_position_speed_tuning"]
+           "plot_position_speed_tuning", "plot_place_fields"]
 
 def plot_features(
     input_feature: Union[nap.Tsd, nap.TsdFrame, nap.TsdTensor, NDArray],
@@ -352,3 +352,23 @@ def plot_position_speed_tuning(position_tuning: pd.DataFrame, speed_tuning: pd.D
             speed_ax = ax
     # fig.tight_layout()
     return fig
+
+
+def plot_place_fields(place_fields, highlight_neurons=[92, 82, 220]):
+    # for display purposes, sort place fields by location
+    order = place_fields.idxmax().sort_values().index.values
+    fig = plt.figure(figsize=(12, 10))
+    gs = plt.GridSpec(place_fields.shape[1], 1)
+    for i, n in enumerate(order):
+        plt.subplot(gs[i, 0])
+        if n in highlight_neurons:
+            c = 'r'
+        else:
+            c = 'C0'
+        plt.fill_between(place_fields.index.values, np.zeros(len(place_fields)),
+                         place_fields[n].values, facecolor=c)
+        if i < place_fields.shape[1] - 1:
+            plt.xticks([])
+        else:
+            plt.xlabel("Position (cm)")
+        plt.yticks([])

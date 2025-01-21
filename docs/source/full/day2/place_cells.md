@@ -12,7 +12,7 @@ kernelspec:
 ---
 
 ```{code-cell} ipython3
-:tags: [hide-input]
+:tags: [hide-input, render-all]
 
 %load_ext autoreload
 %autoreload 2
@@ -48,11 +48,29 @@ This notebook can be downloaded as **{nb-download}`place_cells.ipynb`**. See the
 
 :::
 
-# Fit place cell
+# Model and feature selection with scikit-learn
 
-The data for this example are from [Grosmark, Andres D., and György Buzsáki. "Diversity in neural firing dynamics supports both rigid and learned hippocampal sequences." Science 351.6280 (2016): 1440-1443](https://www.science.org/doi/full/10.1126/science.aad1935).
+Data for this notebook comes from recordings in the mouse hippocampus while the mouse runs on a linear track. We explored this data [yesterday](../day1/phase_preferences.md). Today, we will see that the neurons present in this recording show both tuning for both speed and location (i.e., place fields). However, location and speed are highly correlated. We would like to know which feature is more informative for predicting neuronal firing rate --- how do we do that?
+
+<div class="render-user">
+Data for this notebook comes from recordings in the mouse hippocampus while the mouse runs on a linear track, which we [explored yesterday](../day1/phase_preferences.md).
+</div>
+
+<div class="render-all">
+
+## Learning objectives
+
+- Review how to use pynapple to analyze neuronal tuning
+- Learn how to combine NeMoS basis objects
+- Learn how to use NeMoS objects with [scikit-learn](https://scikit-learn.org/) for cross-validation
+- Learn how to use NeMoS objects with scikit-learn [pipelines](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html)
+- Learn how to use cross-validation to perform model and feature selection
+
+</div>
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -74,96 +92,123 @@ from sklearn import pipeline
 
 # shut down jax to numpy conversion warning
 nap.nap_config.suppress_conversion_warnings = True
-```
 
-## Data Streaming
-
-Here we load the data from OSF. The data is a NWB file.
-
-```{code-cell} ipython3
-path = workshop_utils.fetch_data("Achilles_10252013_EEG.nwb")
+# during development, set this to a lower number so everything runs faster. 
+cv_folds = 2
 ```
 
 ## Pynapple
-We are going to open the NWB file with pynapple
+
+<div class="render-user render-presenter">
+- Load the data using pynapple.
+</div>
 
 ```{code-cell} ipython3
-data = nap.load_file(path)
+:tags: [render-all]
 
+path = workshop_utils.fetch_data("Achilles_10252013_EEG.nwb")
+data = nap.load_file(path)
 data
 ```
 
-Let's extract the spike times, the position and the theta phase.
+<div class="render-user render-presenter">
+- Extract the spike times and mouse position.
+</div>
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 spikes = data["units"]
 position = data["position"]
 ```
 
-The NWB file also contains the time at which the animal was traversing the linear track. We can use it to restrict the position and assign it as the `time_support` of position.
+For today, we're only going to focus on the times when the animal was traversing the linear track. 
+This is a pynapple `IntervalSet`, so we can use it to restrict our other variables:
+
+<div class="render-user render-presenter">
+
+- Restrict data to when animal was traversing the linear track.
+
+</div>
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 position = position.restrict(data["forward_ep"])
+spikes = spikes.restrict(data["forward_ep"])
 ```
 
 The recording contains both inhibitory and excitatory neurons. Here we will focus of the excitatory cells. Neurons have already been labelled before.
 
+<div class="render-user render-presenter">
+
+- Restrict neurons to only excitatory neurons, discarding neurons with a low-firing rate.
+
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
+
 spikes = spikes.getby_category("cell_type")["pE"]
-```
-
-We can discard the low firing neurons as well.
-
-```{code-cell} ipython3
 spikes = spikes.getby_threshold("rate", 0.3)
 ```
 
-## Place fields
-Let's plot some data. We start by making place fields i.e firing rate as a function of position.
+### Place fields
+
+<div class="render-user render-presenter">
+
+- Visualize the *place fields*: neuronal firing rate as a function of position.
+</div>
 
 ```{code-cell} ipython3
-pf = nap.compute_1d_tuning_curves(spikes, position, 50, position.time_support)
+:tags: [render-all]
+
+place_fields = nap.compute_1d_tuning_curves(spikes, position, 50, position.time_support)
+workshop_utils.plot_place_fields(place_fields)
 ```
 
-Let's do a quick sort of the place fields for display
+<div class="render-user render-presenter">
+
+- For speed, we're only going to investigate the three neurons highlighted above.
+- Bin spikes to counts at 100 Hz.
+- Interpolate position to match spike resolution.
+
+</div>
 
 ```{code-cell} ipython3
-order = pf.idxmax().sort_values().index.values
-```
-
-Here each row is one neuron
-
-```{code-cell} ipython3
-fig = plt.figure(figsize=(12, 10))
-gs = plt.GridSpec(len(spikes), 1)
-for i, n in enumerate(order):
-    plt.subplot(gs[i, 0])
-    plt.fill_between(pf.index.values, np.zeros(len(pf)), pf[n].values)
-    if i < len(spikes) - 1:
-        plt.xticks([])
-    else:
-        plt.xlabel("Position (cm)")
-    plt.yticks([])
-```
-
-```{code-cell} ipython3
+:tags: [render-all]
 neurons = [92, 82, 220]
 bin_size = .01
 count = spikes[neurons].count(bin_size, ep=position.time_support)
 position = position.interpolate(count, ep=count.time_support)
+print(count.shape)
+print(position.shape)
 ```
 
 ## Speed modulation
-The speed at which the animal traverse the field is not homogeneous. Does it influence the firing rate of hippocampal neurons? We can compute tuning curves for speed as well as average speed across the maze.
-In the next block, we compute the speed of the animal for each epoch (i.e. crossing of the linear track) by doing the difference of two consecutive position multiplied by the sampling rate of the position.
+
+
+The speed at which the animal traverse the field is not homogeneous. Does it influence the firing rate of hippocampal neurons? We can compute tuning curves for speed as well as average speed across the maze. In the next block, we compute the speed of the animal for each epoch (i.e. crossing of the linear track) by doing the difference of two consecutive position multiplied by the sampling rate of the position.
+
+<div class="render-user render-presenter">
+
+- Compute animal's speed for each epoch.
+
+</div>
+
 
 ```{code-cell} ipython3
+:tags: [render-all]
 speed = []
-for s, e in position.time_support.values: # Time support contains the epochs
+# Analyzing each epoch separately avoids edge effects.
+for s, e in position.time_support.values: 
     pos_ep = position.get(s, e)
-    speed_ep = np.abs(np.diff(pos_ep)) # Absolute difference of two consecutive points
-    speed_ep = np.pad(speed_ep, [0, 1], mode="edge") # Adding one point at the end to match the size of the position array
-    speed_ep = speed_ep * position.rate # Converting to cm/s
+    # Absolute difference of two consecutive points
+    speed_ep = np.abs(np.diff(pos_ep)) 
+    # Padding the edge so that the size is the same as the position/spike counts
+    speed_ep = np.pad(speed_ep, [0, 1], mode="edge") 
+    # Converting to cm/s 
+    speed_ep = speed_ep * position.rate
     speed.append(speed_ep)
 
 speed = nap.Tsd(t=position.t, d=np.hstack(speed), time_support=position.time_support)
@@ -171,26 +216,42 @@ speed = nap.Tsd(t=position.t, d=np.hstack(speed), time_support=position.time_sup
 
 Now that we have the speed of the animal, we can compute the tuning curves for speed modulation. Here we call pynapple [`compute_1d_tuning_curves`](https://pynapple.org/generated/pynapple.process.tuning_curves.html#pynapple.process.tuning_curves.compute_1d_tuning_curves):
 
+<div class="render-user render-presenter">
+
+- Compute the tuning curve with pynapple's [`compute_1d_tuning_curves`](https://pynapple.org/generated/pynapple.process.tuning_curves.html#pynapple.process.tuning_curves.compute_1d_tuning_curves)
+
+</div>
+
 ```{code-cell} ipython3
 tc_speed = nap.compute_1d_tuning_curves(spikes, speed, 20)
 ```
 
-To assess the variabilty in speed when the animal is travering the linear track, we can compute the average speed and estimate the standard deviation. Here we use numpy only and put the results in a pandas [`DataFrame`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html):
-
+<div class="render-user">
 ```{code-cell} ipython3
-fig=workshop_utils.plot_position_speed(position, speed, pf, tc_speed, neurons);
+tc_speed = # compute tuning curve here
 ```
 
-These neurons show a strong modulation of firing rate as a function of speed but we can also notice that the animal, on average, accelerates when travering the field. Is the speed tuning we observe a true modulation or spurious correlation caused by traversing the place field at different speed and for different theta phase? We can use NeMoS to model the activity and give the position, the phase and the speed as input variable.
+</div>
 
-We will use speed, phase and position to model the activity of the neuron.
-All the feature have already been brought to the same dimension thanks to `pynapple`.
+
+<div class="render-user render-presenter">
+
+- Visualize the position and speed tuning for these neurons.
+</div>
+
 
 ```{code-cell} ipython3
-print(position.shape)
-print(speed.shape)
-print(count.shape)
+:tags: [render-all]
+fig = workshop_utils.plot_position_speed(position, speed, place_fields, tc_speed, neurons);
 ```
+
+These neurons show a strong modulation of firing rate as a function of speed but we can also notice that the animal, on average, accelerates when traversing the field. Is the speed tuning we observe a true modulation or spurious correlation caused by traversing the place field at different speeds? We can use NeMoS to model the activity and give the position and the speed as input variable.
+
+<div class="render-user render-presenter">
+
+These neurons all show both position and speed tuning, and we see that the animal's speed and position are highly correlated. We're going to build a GLM to predict neuronal firing rate -- which variable should we use? Is the speed tuning just epiphenomenal?
+
+</div>
 
 (basis_eval_place_cells)=
 ## Basis evaluation
@@ -256,7 +317,7 @@ glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30)
 Let's display both tuning curves together. Does a pretty good job!
 
 ```{code-cell} ipython3
-workshop_utils.plot_position_speed_tuning(pf, tc_speed, neurons, glm_pf, glm_speed);
+workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
 ```
 
 ## How to know when to regularize?
@@ -284,7 +345,7 @@ param_grid = {
 Anything not specified in the grid will be kept constant.
 
 ```{code-cell} ipython3
-cv = model_selection.GridSearchCV(glm, param_grid, cv=5)
+cv = model_selection.GridSearchCV(glm, param_grid, cv=cv_folds)
 ```
 
 ```{code-cell} ipython3
@@ -420,7 +481,7 @@ predicted_rate = nap.TsdFrame(
 glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50)
 glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30)
 
-workshop_utils.plot_position_speed_tuning(pf, tc_speed, neurons, glm_pf, glm_speed);
+workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
 ```
 
 ## Cross-validating on the basis
@@ -450,7 +511,7 @@ param_grid = {
 ```
 
 ```{code-cell} ipython3
-cv = model_selection.GridSearchCV(pipe, param_grid, cv=5)
+cv = model_selection.GridSearchCV(pipe, param_grid, cv=cv_folds)
 ```
 
 ```{code-cell} ipython3
@@ -490,7 +551,7 @@ predicted_rate = nap.TsdFrame(
 glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50)
 glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30)
 
-workshop_utils.plot_position_speed_tuning(pf, tc_speed, neurons, glm_pf, glm_speed);
+workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
 ```
 
 ## Model selection
@@ -554,7 +615,7 @@ for b1 in b1_ns:
 ```
 
 ```{code-cell} ipython3
-cv = model_selection.GridSearchCV(best_estim, param_grid, cv=5)
+cv = model_selection.GridSearchCV(best_estim, param_grid, cv=cv_folds)
 ```
 
 ```{code-cell} ipython3
@@ -596,3 +657,12 @@ Various combinations of features can lead to different results. Feel free to exp
   - [McClain, Kathryn, et al. "Position–theta-phase model of hippocampal place cell activity applied to quantification of running speed modulation of firing rate." Proceedings of the National Academy of Sciences 116.52 (2019): 27035-27042](https://www.pnas.org/doi/abs/10.1073/pnas.1912792116)
 
   - [Peyrache, Adrien, Natalie Schieferstein, and Gyorgy Buzsáki. "Transformation of the head-direction signal into a spatial code." Nature communications 8.1 (2017): 1752.](https://www.nature.com/articles/s41467-017-01908-3)
+
+## References
+
+<div class="render-all">
+
+
+The data in this tutorial comes from [Grosmark, Andres D., and György Buzsáki. "Diversity in neural firing dynamics supports both rigid and learned hippocampal sequences." Science 351.6280 (2016): 1440-1443](https://www.science.org/doi/full/10.1126/science.aad1935).
+
+</div>
