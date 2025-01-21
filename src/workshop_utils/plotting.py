@@ -11,7 +11,7 @@ from nemos import _documentation_utils as doc_plots
 
 __all__ = ["plot_features", "plot_head_direction_tuning_model", "plot_feature_mask",
            "plot_heatmap_cv_results", "plot_position_speed",
-           "plot_position_speed_tuning", "plot_place_fields"]
+           "plot_position_speed_tuning", "plot_place_fields", "plot_pos_speed_bases"]
 
 def plot_features(
     input_feature: Union[nap.Tsd, nap.TsdFrame, nap.TsdTensor, NDArray],
@@ -372,3 +372,10 @@ def plot_place_fields(place_fields, highlight_neurons=[92, 82, 220]):
         else:
             plt.xlabel("Position (cm)")
         plt.yticks([])
+
+def plot_pos_speed_bases(position_basis, speed_basis):
+    fig, axes = plt.subplots(1, 2, figsize=(6, 3))
+    for ax, bas, t in zip(axes, [position_basis, speed_basis], ["Position", "Speed"]):
+        time, kernel = bas.evaluate_on_grid(100)
+        ax.plot(time, kernel)
+        ax.set_title(t)
