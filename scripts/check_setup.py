@@ -70,7 +70,7 @@ gallery_dir = pathlib.Path(__file__).parent.parent / 'docs' / 'source' / 'full'
 nbs = list(repo_dir.glob('**/*ipynb'))
 gallery_scripts = list(gallery_dir.glob('**/*md'))
 missing_nb = [f.stem for f in gallery_scripts
-              if not any([f.stem == nb.stem.replace('_users', '') for nb in nbs])]
+              if not any([f.stem == nb.stem.replace('-users', '') for nb in nbs])]
 if len(missing_nb) == 0:
     print(":white_check_mark: All notebooks found")
 else:
