@@ -228,6 +228,7 @@ print(ex_lfp_run.rate)
 We can visualize the results by plotting a heat map of the calculated wavelet scalogram.
 
 ```{code-cell} ipython3
+:tags: [render-all]
 # plot rest interval for comparison
 fig, axs = plt.subplots(2, 1, figsize=(10,6), constrained_layout=True, height_ratios=[1.0, 0.3], sharex=True)
 fig.suptitle("Wavelet Decomposition")
