@@ -45,6 +45,8 @@ Pynapple functions used:
 </div>
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 import math
 import os
 
