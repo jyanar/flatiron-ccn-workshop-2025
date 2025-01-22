@@ -15,24 +15,88 @@ Before the workshop, please try to complete the following steps. If you are unab
    ```shell
    git clone https://github.com/flatironinstitute/ccn-software-jan-2025.git
    ```
-2. Create a new python 3.11 virtual environment. If you do not have a preferred way of managing your python virtual environments, we recommend [miniconda](https://docs.anaconda.com/free/miniconda/). After installing it (if you have not done so already), run 
+
+### Create a virtual environment with python 3.11
+
+There are many ways to set up a python virtual environment. You can use your favorite way of doing so. If you don't have a preference or don't know what to do, choose one of the following:
+
+:::::{tab-set}
+:sync-group: category
+
+::::{tab-item} uv
+:sync: uv
+
+1. Install `uv`. On Mac or Linux, run:
+   ```shell
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+   
+   On Windows, run:
+   ```powershell
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+2. Install python 3.11:
+   ```shell
+   uv python install 3.11
+   ```
+   
+3. Navigate to your cloned repo and create a new virtual environment:
+   ```shell
+   cd ccn-software-jan-2025
+   uv venv -p 3.11
+   ```
+   
+4. Activate your new virtual environment:
+   ```shell
+   source .venv/bin/activate
+   ```
+
+::::
+
+::::{tab-item} conda / miniforge
+:sync: conda
+
+:::{warning}
+
+Due to [recent changes](https://www.anaconda.com/blog/update-on-anacondas-terms-of-service-for-academia-and-research) to Anaconda's Terms of Service, the Simons Foundation cannot use the `defaults` conda channel and it is blocked on all Flatiron Institute wireless networks. You need to specify `conda-forge` instead (which is community-managed and open to all). The following instructions do so, but if you follow your normal workflow, you may hit issues.
+
+:::
+
+1. Install [miniforge](https://github.com/conda-forge/miniforge) if you do not have some version of `conda` or `mamba` installed already.
+2. Create the new virtual environment by running:
     ```shell
-    conda create --name ccn-jan25 pip python=3.11
+    conda create --name ccn-jan25 pip python=3.11 -c conda-forge
     ```
-3. Activate your new environment: `
+    Note the `-c conda-forge`!
+
+3. Activate your new environment and navigate to the cloned repo: 
     ```shell
     conda activate ccn-jan25
-    ```
-4. Navigate to the cloned github repo and install the required dependencies. This will install pynapple and nemos, as well as jupyter and several other packages.
-    ```shell
     cd ccn-software-jan-2025
+    ```
+::::
+
+:::::
+
+#### Install dependencies and setup notebooks
+    
+1. Install the required dependencies. This will install pynapple and nemos, as well as jupyter and several other packages.
+    ```shell
     pip install -e .
     ```
-5. Run our setup script to download data and prepare the notebooks:
+
+    :::{note}
+    
+    If you are on Mac and get an error related to `ruamel.yaml` (or `clang`), we think this can be fixed by updating your Xcode Command Line Tools.
+    
+    :::
+
+2. Run our setup script to download data and prepare the notebooks:
     ```shell
     python scripts/setup.py
     ```
-6. Confirm the installation and setup completed correctly by running:
+3. Confirm the installation and setup completed correctly by running:
     ```shell
     python scripts/check_setup.py
     ```
@@ -41,7 +105,48 @@ If `check_setup.py` tells you setup was successful, then you're good to go. Othe
 
 After doing the above, the `data/` and `notebooks/` directories within your local copy of the `ccn-software-jan-2025` repository will contain the NWB files and jupyter notebooks for the workshop.
 
-We will work through the notebooks in the order they're listed on this website.
+On the day of the workshop, we will run through the notebooks in the order they're listed on this website. To open them, navigate to the `notebooks/` directory, activate your virtual environment and start `jupyter lab`:
+
+::::{tab-set}
+:sync-group: category
+
+:::{tab-item} uv
+:sync: uv
+
+```shell
+cd path/to/ccn-software-jan-2025/notebooks
+source ../.venv/bin/activate
+jupyter lab
+```
+
+:::
+
+:::{tab-item} conda / miniforge
+:sync: conda
+
+```shell
+cd path/to/ccn-software-jan-2025/notebooks
+conda activate ccn-jan25
+jupyter lab
+```
+
+:::
+
+::::
+
+:::{warning}
+
+If you have multiple jupyter installs on your path (because e.g., because you have an existing jupyter installation in a conda environment and you then used `uv` to setup the virtual environment for this workshop), jupyter can get confused. (You can check if this is the case by running `which -a jupyter` on Mac / Linux.)
+
+To avoid this problem, either make sure you only have one virtual environment active (e.g., by running `conda deactivate`) or prepend `JUPYTER_DATA_DIR=$(realpath ..)/.venv/share/jupyter/` to your jupyter command above:
+
+```shell
+JUPYTER_DATA_DIR=$(realpath ..)/.venv/share/jupyter/ jupyter lab
+```
+
+On Windows, replace `$(realpath ..)` with the path to the `ccn-software-jan-2025` directory.
+
+:::
 
 :::{warning}
 
@@ -51,8 +156,11 @@ We have noticed jupyter notebooks behaving a bit odd in Safari --- if you are ru
 
 ## Binder
 
+A binder instance (a virtual environment running on Flatiron's cluster) is provided in case we cannot get your installation working. To access it, click the "launch binder" button in the top left of this site or click [here](https://binder.flatironinstitute.org/v2/user/wbroderick/jan2025?labpath=notebooks).
+
 Some usage notes:
 
+- You must login with the email address you provided when registering for the workshop. If you need to use a different email, find Billy and give him the new email address.
 - You are only allowed to have a single binder instance running at a time, so if you get the "already have an instance running error", go to the [binderhub page](https://binder.flatironinstitute.org/hub/hub/home) (or click on "check your currently running servers" on the right of the page) to join your running instance.
 - If you lose connection halfway through the workshop, go to the [binderhub page](https://binder.flatironinstitute.org/hub/hub/home) to join your running instance rather than restarting the image.
 - This is important because if you restart the image, **you will lose all data and progress**.
