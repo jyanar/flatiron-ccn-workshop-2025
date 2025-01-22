@@ -8,7 +8,7 @@ We have a slack channel for communicating with attendees, if you haven't receive
 > The rest of this README is for contributors to the workshop.
 
 > [!WARNING]
-> For some reason, we need `jupyterlab < 4.3` in order to get the link highlighting working. There's a class, `.jp-ThemedContainer`, which removes the link styling. Possibly related to [this issue](https://github.com/jupyterlab/jupyterlab/pull/16519)
+> For some reason, we need `jupyterlab < 4.3` in order to get the link highlighting working. There's a class, `.jp-ThemedContainer`, which removes the link styling. Possibly related to [this PR](https://github.com/jupyterlab/jupyterlab/pull/16519) or [this issue](https://github.com/jupyterlab/jupyterlab/issues/13493).
 
 ## Building the site locally
 
