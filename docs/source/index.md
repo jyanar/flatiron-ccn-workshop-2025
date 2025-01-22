@@ -82,9 +82,25 @@ Due to [recent changes](https://www.anaconda.com/blog/update-on-anacondas-terms-
 #### Install dependencies and setup notebooks
     
 1. Install the required dependencies. This will install pynapple and nemos, as well as jupyter and several other packages.
+    ::::{tab-set}
+    :sync-group: category
+    
+    :::{tab-item} uv
+    :sync: uv
+
+    ```shell
+    uv pip install -e .
+    ```
+    :::
+
+    :::{tab-item} conda
+    :sync: conda
+
     ```shell
     pip install -e .
     ```
+    :::
+    ::::
 
     :::{note}
     
