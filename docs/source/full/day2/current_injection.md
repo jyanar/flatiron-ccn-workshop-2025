@@ -12,7 +12,7 @@ kernelspec:
 ---
 
 ```{code-cell} ipython3
-:tags: [hide-input]
+:tags: [hide-input, render-all]
 
 %matplotlib inline
 import warnings
@@ -44,7 +44,7 @@ warnings.filterwarnings(
 This notebook can be downloaded as **{nb-download}`current_injection.ipynb`**. See the button at the top right to download as markdown or pdf.
 :::
 
-# Fit injected current
+# Introduction to GLM
 
 For our first example, we will look at a very simple dataset: patch-clamp
 recordings from a single neuron in layer 4 of mouse primary visual cortex. This
@@ -60,7 +60,13 @@ the experimentalists injected three pulses of current. The current is a square
 pulse multiplied by a sinusoid of a fixed frequency, with some random noise
 riding on top.
 
+<div class="render-user render-presenter">
+Data for this notebook is a patch clamp experiment with a mouse V1 neuron, from the [Allen Brain Atlas](https://celltypes.brain-map.org/experiment/electrophysiology/478498617)
+</div>
+
+<div class="render-all">
 ![Allen Brain Atlas view of the data we will analyze.](../../_static/allen_data.png)
+</div>
 
 In the figure above (from the Allen Brain Atlas website), we see the
 approximately 22 second sweep, with the input current plotted in the first row,
@@ -77,6 +83,8 @@ we'll do using [pynapple](https://pynapple.org). This will largely be a
 review of what we went through yesterday. After we've explored the data some, we'll
 introduce the Generalized Linear Model and how to fit it with NeMoS.
 
+<div class="render-all">
+
 ## Learning objectives 
 
 - Learn how to explore spiking data and do basic analyses using pynapple
@@ -84,8 +92,11 @@ introduce the Generalized Linear Model and how to fit it with NeMoS.
 - Learn how to fit a basic Generalized Linear Model using NeMoS
 - Learn how to retrieve the parameters and predictions from a fit GLM for
   intrepetation.
+</div>
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 # Import everything
 import jax
 import matplotlib.pyplot as plt
@@ -126,7 +137,12 @@ to download the data, and a progress bar will show the download's progress.
 On subsequent runs, the cell gets skipped: we do not need to redownload the
 data.
 
+<div class="render-user render-presenter">
+- Stream the data. Format is [Neurodata Without Borders (NWB) standard](https://nwb-overview.readthedocs.io/en/latest/)
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 path = workshop_utils.fetch_data("allen_478498617.nwb")
 ```
 
@@ -137,7 +153,12 @@ path = workshop_utils.fetch_data("allen_478498617.nwb")
 Now that we've downloaded the data, let's open it with pynapple and examine
 its contents.
 
+<div class="render-user render-presenter">
+- Open the NWB file with [pynapple](https://pynapple-org.github.io/pynapple/)
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 data = nap.load_file(path)
 print(data)
 ```
@@ -146,20 +167,20 @@ The dataset contains several different pynapple objects, which we will
 explore throughout this demo. The following illustrates how these fields relate to the data
 we visualized above:
 
+<div class="render-all">
 ![Annotated view of the data we will analyze.](../../_static/allen_data_annotated.gif)
 <!-- this gif created with the following imagemagick command: convert -layers OptimizePlus -delay 100 allen_data_annotated-units.svg allen_data_annotated-epochs.svg allen_data_annotated-stimulus.svg allen_data_annotated-response.svg -loop 0 allen_data_annotated.gif -->
 
-- `units`: dictionary of neurons, holding each neuron's spike timestamps.
-- `epochs`: start and end times of different intervals, defining the
-  experimental structure, specifying when each stimulation protocol began and
-  ended.
 - `stimulus`: injected current, in Amperes, sampled at 20k Hz.
-- `response`: the neuron's intracellular voltage, sampled at 20k Hz.
-  We will not use this info in this example
+- `response`: the neuron's intracellular voltage, sampled at 20k Hz. We will not use this info in this example.
+- `units`: dictionary of neurons, holding each neuron's spike timestamps.
+- `epochs`: start and end times of different intervals, defining the experimental structure, specifying when each stimulation protocol began and ended.
+</div>
 
 Now let's go through the relevant variables in some more detail:
 
 ```{code-cell} ipython3
+:tags: [render-all]
 trial_interval_set = data["epochs"]
 
 current = data["stimulus"]
@@ -169,6 +190,7 @@ spikes = data["units"]
 First, let's examine `trial_interval_set`:
 
 ```{code-cell} ipython3
+:tags: [render-all]
 trial_interval_set
 ```
 
@@ -176,7 +198,12 @@ trial_interval_set
 [`IntervalSet`](https://pynapple.org/generated/pynapple.IntervalSet.html),
 with a metadata columns (`tags`) defining the stimulus protocol.
 
+<div class="render-user render-presenter">"
+- `Noise 1`: epochs of random noise
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 noise_interval = trial_interval_set[trial_interval_set.tags == "Noise 1"]
 noise_interval
 ```
@@ -186,14 +213,24 @@ three rows, each defining a separate sweep. We'll just grab the first sweep
 (shown in blue in the pictures above) and ignore the other two (shown in
 gray).
 
+<div class="render-user render-presenter">"
+- Let's focus on the first epoch.
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 noise_interval = noise_interval[0]
 noise_interval
 ```
 
 Now let's examine `current`:
 
+<div class="render-user render-presenter">"
+- `current` : Tsd (TimeSeriesData) : time index + data
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 current
 ```
 
@@ -208,7 +245,12 @@ discussed above, we only want one of the "Noise 1" sweeps. Fortunately,
 `pynapple` makes it easy to grab out the relevant time points by making use
 of the `noise_interval` we defined above:
 
+<div class="render-user render-presenter">"
+- `restrict` : restricts a time series object to a set of time intervals delimited by an IntervalSet object
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 current = current.restrict(noise_interval)
 # convert current from Ampere to pico-amperes, to match the above visualization
 # and move the values to a more reasonable range.
@@ -223,7 +265,12 @@ Finally, let's examine the spike times. `spikes` is a
 a dictionary-like object that holds multiple `Ts` (timeseries) objects with
 potentially different time indices:
 
+<div class="render-user render-presenter">"
+- `TsGroup` : a dictionary-like object holding multiple `Ts` (timeseries) objects with potentially different time indices.
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 spikes
 ```
 
@@ -234,7 +281,12 @@ there's only one row.
 We can index into the `TsGroup` to see the timestamps for this neuron's
 spikes:
 
+<div class="render-user render-presenter">"
+We can index into the `TsGroup` to see the timestamps for this neuron's spikes:
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 spikes[0]
 ```
 
@@ -242,7 +294,12 @@ Similar to `current`, this object originally contains data from the entire
 experiment. To get only the data we need, we again use
 `restrict(noise_interval)`:
 
+<div class="render-user render-presenter">"
+Let's restrict to the same epoch `noise_interval`:
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 spikes = spikes.restrict(noise_interval)
 print(spikes)
 spikes[0]
@@ -251,7 +308,12 @@ spikes[0]
 Now, let's visualize the data from this trial, replicating rows 1 and 3
 from the Allen Brain Atlas figure at the beginning of this notebook:
 
+<div class="render-user render-presenter">"
+Let's visualize the data from this trial:
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 fig, ax = plt.subplots(1, 1, figsize=(8, 2))
 ax.plot(current, "grey")
 ax.plot(spikes.to_tsd([-5]), "|", color="k", ms = 10)
@@ -304,7 +366,14 @@ interesting and would like a model to capture.
 
 First, we must convert from our spike times to binned spikes:
 
+<div class="render-user render-presenter">"
+The Generalized Linear Model gives a predicted firing rate. First we can use pynapple to visualize this firing rate for a single trial.
+
+- `count` : count the number of events within `bin_size`
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 # bin size in seconds
 bin_size = 0.001
 # Get spikes for neuron 0
@@ -316,7 +385,14 @@ Now, let's convert the binned spikes into the firing rate, by smoothing them
 with a gaussian kernel. Pynapple again provides a convenience function for
 this:
 
+<div class="render-user render-presenter">"
+Let's convert the spike counts to firing rate :
+
+- `smooth` : convolve with a Gaussian kernel
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 # the inputs to this function are the standard deviation of the gaussian in seconds and
 # the full width of the window, in standard deviations. So std=.05 and size_factor=20
 # gives a total filter size of 0.05 sec * 20 = 1 sec.
@@ -328,6 +404,7 @@ firing_rate = firing_rate / bin_size
 Note that firing_rate is a [`Tsd`](https://pynapple.org/generated/pynapple.Tsd.html)!
 
 ```{code-cell} ipython3
+:tags: [render-all]
 print(type(firing_rate))
 ```
 
@@ -342,6 +419,7 @@ if you are interested.
 :::
 
 ```{code-cell} ipython3
+:tags: [render-all]
 doc_plots.current_injection_plot(current, spikes, firing_rate);
 ```
 
@@ -378,7 +456,13 @@ firing rate within those bins:
 [`compute_1d_tuning_curves`](https://pynapple.org/generated/pynapple.process.tuning_curves.html#pynapple.process.tuning_curves.compute_1d_tuning_curves) : compute the firing rate as a function of a 1-dimensional feature.
 :::
 
+<div class="render-user render-presenter">"
+What is the relationship between the current and the spiking activity?
+[`compute_1d_tuning_curves`](https://pynapple-org.github.io/pynapple/reference/process/tuning_curves/#pynapple.process.tuning_curves.compute_1d_tuning_curves) : compute the firing rate as a function of a 1-dimensional feature.
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 tuning_curve = nap.compute_1d_tuning_curves(spikes, current, nb_bins=15)
 tuning_curve
 ```
@@ -387,7 +471,12 @@ tuning_curve
 neuron in this case) and each row is a bin over the feature (here, the input
 current). We can easily plot the tuning curve of the neuron:
 
+<div class="render-user render-presenter">"
+Let's plot the tuning curve of the neuron.
+</div>
+
 ```{code-cell} ipython3
+:tags: [render-all]
 doc_plots.tuning_curve_plot(tuning_curve);
 ```
 
@@ -443,6 +532,12 @@ spike counts to the proper resolution using the
 [`bin_average`](https://pynapple.org/generated/pynapple.Tsd.bin_average.html)
 method from pynapple:
 
+<div class="render-user render-presenter">
+Get data from pynapple to NeMoS-ready format:
+
+- predictors and spikes must have same number of time points
+</div>
+
 ```{code-cell} ipython3
 binned_current = current.bin_average(bin_size)
 
@@ -462,6 +557,10 @@ Secondly, we have to reshape our variables so that they are the proper shape:
 Because we only have a single predictor feature, we'll use
 [`np.expand_dims`](https://numpy.org/doc/stable/reference/generated/numpy.expand_dims.html)
 to ensure it is a 2d array.
+
+<div class="render-user render-presenter">
+- predictors must be 2d, spikes 1d
+</div>
 
 ```{code-cell} ipython3
 predictor = np.expand_dims(binned_current, 1)
@@ -552,6 +651,10 @@ often less sensitive to step-size. Try other solvers to see how they
 behave!
 :::
 
+<div class="render-user render-presenter">
+- GLM objects need regularizers and observation models
+</div>
+
 ```{code-cell} ipython3
 # Initialize the model, specifying the solver. Since unregularized is the 
 # default choice, we don't need to specify it.
@@ -562,6 +665,10 @@ Now that we've initialized our model with the optimization parameters, we can
 fit our data! In the previous section, we prepared our model matrix
 (`predictor`) and target data (`count`), so to fit the model we just need to
 pass them to the model:
+
+<div class="render-user render-presenter">
+- call fit and retrieve parameters
+</div>
 
 ```{code-cell} ipython3
 model.fit(predictor, count)
@@ -591,6 +698,10 @@ First, we can use the model to predict the firing rates and compare that to
 the smoothed spike train. By calling [`predict()`](nemos.glm.GLM.predict) we can get the model's
 predicted firing rate for this data. Note that this is just the output of the
 model's linear-nonlinear step, as described earlier!
+
+<div class="render-user render-presenter">
+- generate and examine model predictions.
+</div>
 
 ```{code-cell} ipython3
 predicted_fr = model.predict(predictor)
@@ -632,6 +743,10 @@ going on?
 To get a better sense, let's look at the mean firing rate over the whole
 period:
 
+<div class="render-user render-presenter">
+- what do we see?
+</div>
+
 ```{code-cell} ipython3
 # compare observed mean firing rate with the model predicted one
 print(f"Observed mean firing rate: {np.mean(count) / bin_size} Hz")
@@ -645,6 +760,10 @@ inputs and undershot in the middle.
 We can see this more directly by computing the tuning curve for our predicted
 firing rate and comparing that against our smoothed spike train from the
 beginning of this notebook. Pynapple can help us again with this:
+
+<div class="render-user render-presenter">
+- examine tuning curve &mdash; what do we see?
+</div>
 
 ```{code-cell} ipython3
 # pynapple expects the input to this function to be 2d,
@@ -672,6 +791,10 @@ model, but the firing rate is just the output of *LN*, its first two steps.
 The firing rate is just the mean of a Poisson process, so we can pass it to
 `jax.random.poisson`:
 
+<div class="render-user render-presenter">
+- what about spiking?
+</div>
+
 ```{code-cell} ipython3
 spikes = jax.random.poisson(jax.random.PRNGKey(123), predicted_fr.values)
 ```
@@ -689,6 +812,11 @@ Finally, you may want a number with which to evaluate your model's
 performance. As discussed earlier, the model optimizes log-likelihood to find
 the best-fitting weights, and we can calculate this number using its [`score`](nemos.glm.GLM.score)
 method:
+
+<div class="render-user render-presenter">
+- how to quantify model performance?
+</div>
+
 
 ```{code-cell} ipython3
 log_likelihood = model.score(predictor, count, score_type="log-likelihood")
@@ -722,7 +850,11 @@ model.score(predictor, count, score_type='pseudo-r2-Cohen')
 Despite the simplicity of this dataset, there is still more that we can do
 here. The following sections provide some possible exercises to try yourself!
 
-### Other stimulation protocols
+<div class="render-user render-presenter">
+- what else can we do?
+</div>
+
+**Other stimulation protocols**
 
 We've only fit the model to a single stimulation protocol, but our dataset
 contains many more! How does the model perform on "Ramp"? On "Noise 2"? Based
@@ -730,7 +862,7 @@ on the example code above, write new code that fits the model on some other
 stimulation protocol and evaluate its performance. Which stimulation does it
 perform best on? Which is the worst?
 
-### Train and test sets
+**Train and test sets**
 
 In this example, we've used been fitting and evaluating our model on the same
 data set. That's generally a bad idea! Try splitting the data in to train and
@@ -738,10 +870,10 @@ test sets, fitting the model to one portion of the data and evaluating on
 another portion. You could split this stimulation protocol into train and
 test sets or use different protocols to train and test on.
 
-### Model extensions
+**Model extensions**
 
-Even our extended model did not do a good job capturing the onset transience seen in
-the data, and we could probably improve the match between the amplitudes of the
+Our model did not do a good job capturing the onset transience seen in the
+data, and we could probably improve the match between the amplitudes of the
 predicted firing rate and smoothed spike train. How would we do that?
 
 We could try adding the following inputs to the model, alone or together:
@@ -765,35 +897,27 @@ current history inputs without them (though the model won't do as well), or
 return to this example after you've learned about `Basis` objects and how to
 use them.
 
-## Citation
-
-The data used in this tutorial is from the **Allen Brain Map**, with the
-[following
-citation](https://knowledge.brain-map.org/data/1HEYEW7GMUKWIQW37BO/summary):
-
-**Contributors:** Agata Budzillo, Bosiljka Tasic, Brian R. Lee, Fahimeh
-Baftizadeh, Gabe Murphy, Hongkui Zeng, Jim Berg, Nathan Gouwens, Rachel
-Dalley, Staci A. Sorensen, Tim Jarsky, Uygar Sümbül Zizhen Yao
-
-**Dataset:** Allen Institute for Brain Science (2020). Allen Cell Types Database
--- Mouse Patch-seq [dataset]. Available from
-brain-map.org/explore/classes/multimodal-characterization.
-
-**Primary publication:** Gouwens, N.W., Sorensen, S.A., et al. (2020). Integrated
-morphoelectric and transcriptomic classification of cortical GABAergic cells.
-Cell, 183(4), 935-953.E19. https://doi.org/10.1016/j.cell.2020.09.057
-
-**Patch-seq protocol:** Lee, B. R., Budzillo, A., et al. (2021). Scaled, high
-fidelity electrophysiological, morphological, and transcriptomic cell
-characterization. eLife, 2021;10:e65482. https://doi.org/10.7554/eLife.65482
-
-**Mouse VISp L2/3 glutamatergic neurons:** Berg, J., Sorensen, S. A., Miller, J.,
-Ting, J., et al. (2021) Human neocortical expansion involves glutamatergic
-neuron diversification. Nature, 598(7879):151-158. doi:
-10.1038/s41586-021-03813-8
 
 ## References
 
 [1] <span id="ref-1"><a href="https://arxiv.org/abs/2010.12362">Arribas, Diego, Yuan Zhao, and Il Memming Park. "Rescuing neural spike train models from bad MLE." Advances in Neural Information Processing Systems 33 (2020): 2293-2303.</a></span>
 
 [2] <a href="https://ieeexplore.ieee.org/document/8008426">Hocker, David, and Memming Park. "Multistep inference for generalized linear spiking models curbs runaway excitation." International IEEE/EMBS Conference on Neural Engineering, May 2017.</a>
+
+<div class="render-all">
+
+### Data citation
+
+The data used in this tutorial is from the **Allen Brain Map**, with the [following citation](https://knowledge.brain-map.org/data/1HEYEW7GMUKWIQW37BO/summary):
+
+**Contributors:** Agata Budzillo, Bosiljka Tasic, Brian R. Lee, Fahimeh Baftizadeh, Gabe Murphy, Hongkui Zeng, Jim Berg, Nathan Gouwens, Rachel Dalley, Staci A. Sorensen, Tim Jarsky, Uygar Sümbül Zizhen Yao
+
+**Dataset:** Allen Institute for Brain Science (2020). Allen Cell Types Database -- Mouse Patch-seq [dataset]. Available from brain-map.org/explore/classes/multimodal-characterization.
+
+**Primary publication:** Gouwens, N.W., Sorensen, S.A., et al. (2020). Integrated morphoelectric and transcriptomic classification of cortical GABAergic cells. Cell, 183(4), 935-953.E19. https://doi.org/10.1016/j.cell.2020.09.057
+
+**Patch-seq protocol:** Lee, B. R., Budzillo, A., et al. (2021). Scaled, high fidelity electrophysiological, morphological, and transcriptomic cell characterization. eLife, 2021;10:e65482. https://doi.org/10.7554/eLife.65482
+
+**Mouse VISp L2/3 glutamatergic neurons:** Berg, J., Sorensen, S. A., Miller, J., Ting, J., et al. (2021) Human neocortical expansion involves glutamatergic neuron diversification. Nature, 598(7879):151-158. doi: 10.1038/s41586-021-03813-8
+
+</div>
