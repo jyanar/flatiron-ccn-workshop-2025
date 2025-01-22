@@ -12,7 +12,7 @@ kernelspec:
 ---
 
 ```{code-cell} ipython3
-:tags: [hide-input]
+:tags: [hide-input, render-all]
 
 %matplotlib inline
 import warnings
