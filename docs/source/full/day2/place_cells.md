@@ -315,11 +315,13 @@ As we've done before, we can now use the Poisson GLM from NeMoS to learn the com
 </div>
 
 <div class="render-user">
+
 ```{code-cell} ipython3
+:tags: [skip-execution]
 # initialize 
 glm =
 
-\# and fit
+# and fit
 
 ```
 
@@ -347,18 +349,21 @@ Let's check first if our model can accurately predict the tuning curves we displ
 </div>
 
 <div class="render-user">
+
 ```{code-cell} ipython3
+:tags: [skip-execution]
+
 # predict the model's firing rate
 predicted_rate = 
 
-\# recreate TsdFrame so we can rename columns
+# recreate TsdFrame so we can rename columns
 predicted_rate = nap.TsdFrame(
     t=predicted_rate.t,
     d=predicted_rate.d,
     columns=sorted(neurons),
 )
 
-\# compute the position and speed tuning curves using the predicted firing rate.
+# compute the position and speed tuning curves using the predicted firing rate.
 glm_pf = 
 glm_speed = 
 ```
@@ -368,7 +373,7 @@ glm_speed =
 
 ```{code-cell} ipython3
 predicted_rate = glm.predict(X) / bin_size
-\# recreate so we can rename columns
+# recreate so we can rename columns
 predicted_rate = nap.TsdFrame(
     t=predicted_rate.t,
     d=predicted_rate.d,
@@ -615,18 +620,21 @@ Just like before:
 </div>
 
 <div class="render-user">
+
 ```{code-cell} ipython3
+:tags: [skip-execution]
+
 # predict the model's firing rate -- remember to use the pipe object!
 predicted_rate = 
 
-\# recreate TsdFrame so we can rename columns
+# recreate TsdFrame so we can rename columns
 predicted_rate = nap.TsdFrame(
     t=predicted_rate.t,
     d=predicted_rate.d,
     columns=sorted(neurons),
 )
 
-\# compute the position and speed tuning curves using the predicted firing rate.
+# compute the position and speed tuning curves using the predicted firing rate.
 glm_pf = 
 glm_speed = 
 
@@ -745,18 +753,21 @@ Just like before:
 </div>
 
 <div class="render-user">
+
 ```{code-cell} ipython3
+:tags: [skip-execution]
+
 # predict the model's firing rate -- using the best estimator!
 predicted_rate = 
 
-\# recreate TsdFrame so we can rename columns
+# recreate TsdFrame so we can rename columns
 predicted_rate = nap.TsdFrame(
     t=predicted_rate.t,
     d=predicted_rate.d,
     columns=sorted(neurons),
 )
 
-\# compute the position and speed tuning curves using the predicted firing rate.
+# compute the position and speed tuning curves using the predicted firing rate.
 glm_pf = 
 glm_speed = 
 
@@ -957,18 +968,20 @@ Just like before:
 </div>
 
 <div class="render-user">
+
 ```{code-cell} ipython3
+:tags: [skip-execution]
 # predict the model's firing rate -- using the best estimator!
 predicted_rate = 
 
-\# recreate TsdFrame so we can rename columns
+# recreate TsdFrame so we can rename columns
 predicted_rate = nap.TsdFrame(
     t=predicted_rate.t,
     d=predicted_rate.d,
     columns=sorted(neurons),
 )
 
-\# compute the position and speed tuning curves using the predicted firing rate.
+# compute the position and speed tuning curves using the predicted firing rate.
 glm_pf = 
 glm_speed = 
 
@@ -979,7 +992,7 @@ workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_p
 
 ```{code-cell} ipython3
 predicted_rate = cv.best_estimator_.predict(transformer_input) / bin_size
-\# recreate so we can rename columns
+# recreate so we can rename columns
 predicted_rate = nap.TsdFrame(
     t=predicted_rate.t,
     d=predicted_rate.d,

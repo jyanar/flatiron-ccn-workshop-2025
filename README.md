@@ -18,7 +18,7 @@ This script creates two copies of each file found at `docs/source/full/*/*md`, t
 For this to work:
 - The title should be on a line by itself, use `#` (e.g., `# My awesome title`) and be the first such line (so no comments above it).
 - All headers must be markdown-style (using `#`), rather than using `------` underneath them.
-- You may need to place blank newlines before/after any `div` opening or closing.
+- You may need to place blank newlines before/after any `div` opening or closing. I think if you don't place newlines after the `div` opening, it will consider everything after it part of a markdown block (which is probably not what you want if it's a `{code-cell}`).
 
 Full notebook:
 - Will not render any markdown wrapped in a div with `class='render-user'` or `class='render-presenter'` (but will render those wrapped in `class='render-all'`)
@@ -33,7 +33,7 @@ Presenters version preserves:
 
 Users version preserves:
 - All markdown headers.
-- Only code blocks with `:tag: [render-all]` *OR* wrapped in a `<div class='render-user'>`.
+- Only code blocks with `:tag: [render-all]` *OR* wrapped in a `<div class='render-user'>`. For code blocks in render-user divs, you should probably also add the `skip-execution` tag
 - Only colon-fence blocks (e.g., admonitions) that have the class `render-user` or `render-all`
 - Only markdown wrapped in a `<div class='render-user>` or `<div class='render-all'>`.
 
