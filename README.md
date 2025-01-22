@@ -7,6 +7,9 @@ We have a slack channel for communicating with attendees, if you haven't receive
 > [!INFO]
 > The rest of this README is for contributors to the workshop.
 
+> [!WARNING]
+> For some reason, we need `jupyterlab < 4.3` in order to get the link highlighting working. There's a class, `.jp-ThemedContainer`, which removes the link styling. Possibly related to [this issue](https://github.com/jupyterlab/jupyterlab/pull/16519)
+
 ## Building the site locally
 
 To build the site locally, clone this repo and install it in a fresh python 3.11 environment (`pip install -e .`). Then run `make -C docs html O="-T"` and open `docs/build/html/index.html` in your browser.
