@@ -208,7 +208,7 @@ Let's plot the preferred heading
 ```{code-cell} ipython3
 :tags: [render-all]
 
-fig = doc_plots.plot_head_direction_tuning(
+fig = workshop_utils.plot_head_direction_tuning_model(
     tuning_curves, spikes, angle, threshold_hz=1, start=8910, end=8960
 )
 ```
@@ -892,8 +892,9 @@ Plot fit predictions over a short window not used for training.
 :tags: [render-all]
 
 # use pynapple for time axis for all variables plotted for tick labels in imshow
-doc_plots.plot_head_direction_tuning_model(tuning_curves, predicted_firing_rate, spikes, angle, threshold_hz=1,
-                                          start=8910, end=8960, cmap_label="hsv");
+workshop_utils.plot_head_direction_tuning_model(tuning_curves, spikes, angle, 
+                                                predicted_firing_rate, threshold_hz=1,
+                                                start=8910, end=8960, cmap_label="hsv");
 ```
 
 Let's see if our firing rate predictions improved and in what sense.
