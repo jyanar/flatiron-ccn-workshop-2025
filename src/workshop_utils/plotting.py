@@ -8,7 +8,6 @@ from typing import Union
 from numpy.typing import NDArray
 from matplotlib.animation import FuncAnimation
 
-
 __all__ = ["plot_features", "animate_1d_convolution"]
 
 
@@ -59,16 +58,6 @@ def plot_features(
 
     plt.tight_layout()
     return fig
-
-
-import pynapple as nap
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-from typing import Union
-from numpy.typing import NDArray
-from matplotlib.animation import FuncAnimation
-from matplotlib.animation import FuncAnimation
 
 
 class Plot1DConvolution:
