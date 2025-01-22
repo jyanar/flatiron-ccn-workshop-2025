@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 
-import click
+try:
+    import click
+except ImportError:
+    raise ImportError(
+        "We couldn't find click, which likely means we're not running from the right virtual "
+        "environment! Did you forget to activate your virtual env"
+        " (using `source` or `conda activate`, depending on how "
+        "you set it up)"
+    )
 import pathlib
 import shutil
 import subprocess
