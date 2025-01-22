@@ -176,6 +176,7 @@ ex_position = position.restrict(ex_run_ep)
 By default, plotting Tsd objects will use the time index on the x-axis. However, for a more interpretable time axis, we'll subtract the first time index from each variable's time indices and pass it as the first argument in matplotlib's `plot`. This will give the relative time elapsed on the current run.
 
 ```{code-cell} ipython3
+:tags: [render-all]
 fig, axs = plt.subplots(2, 1, constrained_layout=True, figsize=(10, 6), sharex=True)
 
 # plot LFP
@@ -246,6 +247,8 @@ axs[1].margins(0)
 ```
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 theta_freq_index = (freqs >= 6) & (freqs <= 12)
 
 # Extract its real component, as well as its power envelope
@@ -282,6 +285,8 @@ fft_amp = np.abs(fft)
 Let's plot the amplitude between 1 and 100 Hz and overlay a region signifying the theta frequency band.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig, ax = plt.subplots(figsize=(10,4), constrained_layout=True)
 ax.plot(fft_amp[(fft_amp.index >= 1) & (fft_amp.index <= 100)])
 ax.axvspan(6, 12, color="red", alpha=0.1, label = "theta band")
@@ -299,6 +304,8 @@ power = nap.compute_power_spectral_density(lfp_run, fs=sample_freq)
 Plotting this power estimate in the same frequency range shows a similar trend to the FFT amplitude, but now in units of power/frequency.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig, ax = plt.subplots(figsize=(10,4), constrained_layout=True)
 ax.plot(power[(power.index >= 1) & (power.index <= 100)])
 ax.axvspan(6, 12, color="red", alpha=0.1, label = "theta band")
@@ -325,6 +332,8 @@ fft_rest = nap.compute_mean_fft(
 Now let's plot the amplitude of each FFT and zoom in between 3 and 30 Hz.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig, ax = plt.subplots(1, constrained_layout=True, figsize=(10, 4))
 ax.plot(
     np.abs(fft_run[(fft_run.index >= 3.0) & (fft_run.index <= 30)]),
@@ -371,6 +380,8 @@ theta_band = nap.apply_bandpass_filter(lfp_run, (6.0, 12.0), fs=sample_freq)
 We can visualize the output by plotting the filtered signal with the original signal.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 plt.figure(constrained_layout=True, figsize=(10, 3))
 plt.plot(ex_lfp_run, alpha=0.5, label="raw")
 plt.plot(theta_band.restrict(ex_run_ep), label="filtered")
@@ -391,6 +402,8 @@ theta_amp = nap.Tsd(t=theta_band.t, d=amp)
 ```
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 plt.figure(constrained_layout=True, figsize=(10, 3))
 plt.plot(theta_band.restrict(ex_run_ep), label="filtered theta")
 plt.plot(theta_amp.restrict(ex_run_ep), label="theta amplitude")
@@ -402,6 +415,8 @@ theta_power = theta_amp ** 2
 ```
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig, axs = plt.subplots(2,1,constrained_layout=True, figsize=(10,6))
 axs[0].plot(lfp_run.restrict(ex_run_ep))
 axs[1].plot(theta_power.restrict(ex_run_ep))
@@ -429,6 +444,8 @@ theta_phase = nap.Tsd(t=theta_band.t, d=phase)
 Let's plot the phase on top of the filtered LFP signal.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig,axs = plt.subplots(2,1,figsize=(10,4), constrained_layout=True) #, sharex=True, height_ratios=[2,1])
 
 ax = axs[0]
@@ -477,6 +494,8 @@ place_fields[:] = gaussian_filter1d(place_fields.values, 1, axis=0)
 We can use a subplot array to visualize the place fields of many units simultaneously. Let's do this for the first 50 units.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig, axs = plt.subplots(10, 5, figsize=(12, 15), sharex=True, constrained_layout=True)
 for i, (f, fields) in enumerate(place_fields.iloc[:,:50].items()):
     idx = np.unravel_index(i, axs.shape)
@@ -506,6 +525,8 @@ spike_theta = spikes[unit].value_from(theta_band)
 Let's plot the spike times on top of the LFP and filtered theta, as well as visualize the animal's position along the track. As a reminder, we'll additionally plot the example unit's place field along the right side.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig,axs = plt.subplots(1, 2, figsize=(10,2), constrained_layout=True, width_ratios=[1, 0.1])
 axs[0].plot(ex_lfp_run, alpha=0.5, label="raw LFP")
 axs[0].plot(theta_band.restrict(ex_run_ep), color="slateblue", label="filtered theta")
@@ -532,6 +553,8 @@ spike_phase = spikes[unit].value_from(theta_phase)
 To visualize the results, we'll recreate the plot above, but instead with the theta phase.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig,axs = plt.subplots(2, 2, figsize=(10,4), constrained_layout=True, width_ratios=[1, 0.1])
 
 axs[0,0].plot(theta_band.restrict(ex_run_ep),color="slateblue")
@@ -564,6 +587,8 @@ spike_position = spikes[unit].value_from(position)
 Now we can plot the spike phase against the spike position in a scatter plot.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 plt.subplots(figsize=(5,3))
 plt.plot(spike_position, spike_phase, 'o')
 plt.ylabel("Phase (rad)")
@@ -599,6 +624,8 @@ tuning_curves, (pos_x, phase_y) = nap.compute_2d_tuning_curves(pyr_spikes, featu
 We can plot the first 50 2D tuning curves to visualize how many of these units are phase precessing.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 fig, axs = plt.subplots(10, 5, figsize=(10, 15), sharex=True, constrained_layout=True)
 for i, f in enumerate(list(tuning_curves.keys())[:50]):
     idx = np.unravel_index(i, axs.shape)
@@ -727,6 +754,8 @@ smth_decoded_position, smth_decoded_prob = nap.decode_1d(place_fields, smth_coun
 Let's plot the results.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 plt.subplots(figsize=(12, 4), constrained_layout=True)
 plt.pcolormesh(smth_decoded_prob.index, smth_decoded_prob.columns, np.transpose(smth_decoded_prob))
 plt.plot(smth_decoded_position, color="green")
@@ -742,6 +771,8 @@ We can see a much smoother estimate of position, as well as a smoother posterior
 Units phase precessing together creates fast, spatial sequences around the animal's true position. We can reveal this by decoding at an even shorter time scale, which will appear as errors in the decoder.
 
 ```{code-cell} ipython3
+:tags: [render-all]
+
 counts = spikes.restrict(ex_run_ep).count(0.01)
 smth_counts = counts.convolve(np.ones(4))
 smth_decoded_position, smth_decoded_prob = nap.decode_1d(place_fields, smth_counts, ex_run_ep, bin_size=0.04)
