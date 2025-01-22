@@ -40,6 +40,7 @@ dependencies = [
     'jupytext',
     'jupyterlab_myst',
     'jupyter',
+    "jupyterlab<4.3",
     'pillow',
     'nemos @ git+https://github.com/flatironinstitute/nemos.git@main',
     'pynapple',
