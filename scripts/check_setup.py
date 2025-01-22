@@ -68,7 +68,8 @@ else:
 repo_dir = pathlib.Path(__file__).parent.parent / 'notebooks'
 gallery_dir = pathlib.Path(__file__).parent.parent / 'docs' / 'source' / 'full'
 nbs = list(repo_dir.glob('**/*ipynb'))
-gallery_scripts = list(gallery_dir.glob('**/*md'))
+gallery_scripts = [nb for nb in list(gallery_dir.glob('**/*md'))
+                   if 'checkpoint' not in nb.name]
 missing_nb = [f.stem for f in gallery_scripts
               if not any([f.stem == nb.stem.replace('-users', '') for nb in nbs])]
 if len(missing_nb) == 0:
