@@ -34,6 +34,7 @@ This notebook can be downloaded as **{nb-download}`fundamentals_of_pynapple.ipyn
 - Make the pynapple objects interact
 - Use numpy with pynapple
 - Slicing pynapple objects
+- Adding metadata to pynapple objects
 - Learn the core functions of pynapple
 
 The pynapple documentation can be found [here](https://pynapple.org).
@@ -51,6 +52,7 @@ If an import fails, you can do `!pip install pynapple matplotlib` in a cell to f
 import pynapple as nap
 import matplotlib.pyplot as plt
 import numpy as np
+import workshop_utils
 ```
 
 For this notebook we will work with fake data. The following cells generate a set of variables that we will use to create the different pynapple objects.
@@ -63,7 +65,7 @@ tsp1 = np.arange(100) # The timesteps of variable 1
 
 var2 = np.random.randn(100, 3) # Variable 2
 tsp2 = np.arange(0, 100, 1) # The timesteps of variable 2
-col2 = ['potato', 'banana', 'tomato'] # The name of each columns of var2
+col2 = ['pineapple', 'banana', 'tomato'] # The name of each columns of var2
 
 var3 = np.random.randn(1000, 4, 5) # Variable 3
 tsp3 = np.arange(0, 100, 0.1) # The timesteps of variable 3
@@ -233,6 +235,66 @@ print(tsd1)
 print(tsd1.time_support)
 ```
 
+```{code-cell} ipython3
+ep_tmp = nap.IntervalSet(np.sort(np.random.uniform(0, 100, 20)))
+print(ep_tmp)
+```
+
+<div class="render-all">
+
+**Question:** Can you do the intersection of `ep_signal` and `ep_tmp`?
+</div>
+
+```{code-cell} ipython3
+print(ep_signal.intersect(ep_tmp))
+```
+
+<div class="render-all">
+You can visualize IntervalSet using the function `workshop_utils.visualize_intervals` we provide.
+</div>
+
+```{code-cell} ipython3
+:tags: [render-all]
+workshop_utils.visualize_intervals([ep_signal, ep_tmp, ep_signal.intersect(ep_tmp)])
+```
+
+<div class="render-all">
+
+**Question:** Can you do the union of `ep_signal` and `ep_tmp`?
+</div>
+
+```{code-cell} ipython3
+print(ep_signal.union(ep_tmp))
+```
+
+<div class="render-all">
+
+**Question:** ... and visualize it?
+</div>
+
+```{code-cell} ipython3
+workshop_utils.visualize_intervals([ep_signal, ep_tmp, ep_signal.union(ep_tmp)])
+```
+
+<div class="render-all">
+
+**Question:** Can you do the difference of `ep_signal` and `ep_tmp`?
+</div>
+
+```{code-cell} ipython3
+print(ep_signal.set_diff(ep_tmp))
+```
+
+<div class="render-all">
+
+**Question:** ... and visualize it?
+</div>
+
+```{code-cell} ipython3
+workshop_utils.visualize_intervals([ep_signal, ep_tmp, ep_signal.set_diff(ep_tmp)])
+```
+
+
 ## Numpy & pynapple
 
 <div class="render-all">
@@ -297,36 +359,136 @@ print(tsd3.get(50.1))
 
 ## Metadata
 
-`TsGroup` is under the hood a python dictionnary but the capabilities have been extented.
+<div class="render-all">
+
+Metadata are ubiquitous in neuroscience. They can be added to 3 pynapple objects :
+
+- `TsGroup` : to label neurons in electrophysiology
+- `IntervalSet` : to label intervals
+- `TsdFrame` : to label neurons in calcium imaging
+
 
 **Question:** Can you run the following command `tsgroup['planet'] = ['mars', 'venus', 'saturn']`
-
+</div>
 
 ```{code-cell} ipython3
 tsgroup['planet'] = ['mars', 'venus', 'saturn']
 ```
 
-**Question:** ... and print it?
+<div class="render-all">
 
+**Question:** ... and print it?
+</div>
 
 ```{code-cell} ipython3
 print(tsgroup)
 ```
 
-After initialization, metainformation can only be added. Running the following command will raise an error: `tsgroup[3] = np.random.randn(3)`.
+<div class="render-all">
 
-From there, you can slice using the Index column (i.e. `tsgroup[0]`->nap.Ts, `tsgroup[[0,2]]` -> nap.TsGroup).
+The object `ep` has 3 epochs labelled `['left', 'right', 'left']`. 
 
-But more interestingly you can also slice using the metadata. There are multiple methods for it : `getby_category`, `getby_threshold`, `getby_intervals`.
+**Question:** Can you add them as a metadata column called `direction`?
 
-**Question:** Can you select only the elements of `tsgroup` with rate below 1Hz?
-
+</div>
 
 ```{code-cell} ipython3
-tsgroup.getby_threshold("rate", 1, "<")
-
-tsgroup[tsgroup.rate < 1.0]
+ep['direction'] = ['left', 'right', 'left']
+print(ep)
 ```
+
+<div class="render-all">
+
+The object `tsd2` has 3 columns. Each column correspond to the rgb colors `[(0,0,1), (0.5, 0.5, 1), (0.1, 0.2, 0.3)]`. 
+
+**Question:** Can you add them as metadata of `tsd2`?
+</div>
+
+```{code-cell} ipython3
+tsd2['colors'] = [(0,0,1), (0.5, 0.5, 1), (0.1, 0.2, 0.3)]
+print(tsd2)
+```
+
+<div class="render-all">
+
+You can also add metadata at initialization as a dictionnary using the keyword argument `metadata` : 
+</div>
+
+```{code-cell} ipython3
+:tags: [render-all]
+
+tsgroup = nap.TsGroup({0:ts1, 1:ts2, 2:ts3}, metadata={'planet':['mars','venus', 'saturn']})
+
+print(tsgroup)
+```
+
+<div class="render-all">
+
+Metadata are accessible either as attributes (i.e. `tsgroup.planet`) or as dictionnary-like keys (i.e. `ep['direction']`).
+
+They can be used to slice objects. 
+
+**Question:** Can you select only the elements of `tsgroup` with rate below 1Hz?
+</div>
+
+```{code-cell} ipython
+print(tsgroup[tsgroup.rate<1.0])
+
+print(tsgroup[tsgroup['rate']<1.0])
+
+print(tsgroup.getby_threshold("rate", 1, "<"))
+
+```
+
+<div class="render-all">
+
+**Question:** Can you select the intervals in `ep` labelled as `'left'`?
+</div>
+
+```{code-cell} ipython
+print(ep[ep.direction=='left'])
+```
+
+#### Special case of slicing : `TsdFrame`
+
+```{code-cell} ipython
+:tags: [render-all]
+
+tsdframe = nap.TsdFrame(t=np.arange(4), d=np.random.randn(4,3),
+  columns = [12, 0, 1], metadata={'alpha':[2,1,0]})
+
+print(tsdframe)
+```
+
+<div class="render-all">
+
+**Question:** What happen when you do `tsdframe[0]` vs `tsdframe[:,0]` vs `tsdframe[[12,1]]`
+</div>
+
+```{code-cell} ipython
+print(tsdframe[0])
+```
+
+<div class="render-all">
+
+**Question:** What happen when you do `tsdframe.loc[0]` and `tsdframe.loc[[0,1]]`
+</div>
+
+```{code-cell} ipython
+print(tsdframe.loc[0])
+print(tsdframe.loc[[0,1]])
+```
+
+<div class="render-all">
+
+**Question:** What happen when you do `tsdframe[tsdframe.alpha==2]`
+
+</div>
+
+```{code-cell} ipython
+print(tsdframe[tsdframe.alpha==2])
+```
+
 
 ## Core functions of pynapple 
 

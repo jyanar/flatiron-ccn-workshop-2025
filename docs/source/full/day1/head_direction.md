@@ -104,7 +104,7 @@ print(spikes)
 
 There are a lot of neurons. The neurons that interest us are the neurons labeled `adn`. 
 
-**Question:** Using the [slicing method](https://pynapple.org/user_guide/03_metadata.html#using-metadata-to-slice-objects) of your choice (`getby_category` method or boolean indexing), can you select only the neurons in `adn` that are above 1 Hz firing rate?
+**Question:** Using the [slicing method](https://pynapple.org/user_guide/03_metadata.html#using-metadata-to-slice-objects) of your choice, can you select only the neurons in `adn` that are above 1 Hz firing rate?
 
 </div>
 
@@ -342,12 +342,12 @@ plt.plot(spikes.restrict(rem_ep).to_tsd("pref_ang"), '|')
 
 We see that some neurons have a correlated activity. Can we measure it?
 
-**Question:**Can you compute cross-correlograms during wake for all pairs of neurons and call it `cc_wake`?
+**Question:** Can you compute cross-correlograms during wake for all pairs of neurons and call it `cc_wake`?
 
 </div>
 
 ```{code-cell} ipython3
-cc_wake = nap.compute_crosscorrelogram(spikes, 0.2, 20.0, ep=wake_ep)
+cc_wake = nap.compute_crosscorrelogram(spikes, binsize=0.2, windowsize=20.0, ep=wake_ep)
 ```
 
 <div class="render-all">
