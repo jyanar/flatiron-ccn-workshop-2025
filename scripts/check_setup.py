@@ -49,20 +49,25 @@ else:
     print(f":white_check_mark: jupyter found with following core packages:\n{stdout}")
 
 p = subprocess.Popen(['jupyter', 'labextension', 'list'], stderr=subprocess.PIPE)
+if os.name == "nt":
+    search_cmd = "findstr"
+else:
+    search_cmd = "grep"
 try:
-    output = subprocess.check_output(['grep', 'myst'], stdin=p.stderr).decode()
+    output = subprocess.check_output([search_cmd, 'myst'], stdin=p.stderr).decode().lower()
     p.wait()
 except subprocess.CalledProcessError:
     errors += 1
     print(":x: jupyterlab_myst not found. Try running [bold]pip install jupyterlab_myst[/bold]")
 else:
-    if 'enabled' in output and 'OK' in output:
+    if 'enabled' in output and 'ok' in output:
         with warnings.catch_warnings():
             # this import may give a deprecation warning about how jupyter handles paths
             warnings.simplefilter("ignore")
             import jupyterlab_myst
         print(f":white_check_mark: jupyterlab_myst version:\n{jupyterlab_myst.__version__}")
     else:
+        errors += 1
         print(":x: jupyterlab_myst not set up correctly! Look at the output of `jupyter labextension list` and try running [bold]pip install jupyterlab_myst[/bold]")
 
 repo_dir = pathlib.Path(__file__).parent.parent / 'notebooks'
@@ -86,7 +91,10 @@ except ModuleNotFoundError:
     print(f":x: workshop utilities not found. Try running [bold]pip install .[/bold] from the github repo.")
 else:
     missing_files = []
-    from nemos.fetch.fetch_data import _create_retriever
+    with warnings.catch_warnings():
+        # this import may give warning about documentation_utils
+        warnings.simplefilter("ignore")
+        from nemos.fetch.fetch_data import _create_retriever
     retriever = _create_retriever()
     for f in workshop_utils.DOWNLOADABLE_FILES:
         # as far as I could find, retriever doesn't have a "check if file is downloaded"

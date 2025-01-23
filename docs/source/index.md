@@ -31,9 +31,9 @@ There are many ways to set up a python virtual environment. You can use your fav
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
    
-   On Windows, run:
+   On Windows, open up powershell and run:
    ```powershell
-   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
 
 2. Install python 3.11:
@@ -47,10 +47,22 @@ There are many ways to set up a python virtual environment. You can use your fav
    uv venv -p 3.11
    ```
    
-4. Activate your new virtual environment:
+4. Activate your new virtual environment. On Mac or Linux, run:
    ```shell
    source .venv/bin/activate
    ```
+   
+   On Windows, run:
+   ```powershell
+   .venv\Scripts\activate
+   ```
+   
+   :::{warning}
+   On Windows, you may receive an error saying "running scripts is disabled on this system". If so, run `Set-ExecutionPolicy -Scope CurrentUser` and enter `Unrestricted`, then press `Y`.
+   
+   You may have to do this every time you open powershell.
+   
+   :::
 
 ::::
 
