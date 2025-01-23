@@ -812,7 +812,7 @@ to get an array of predictors of shape, `(num_time_points, num_neurons * num_bas
 #### Preparing the features
 
 <div class="render-user">
-- Set the basis input shape to the number of neurons.
+- Re-define the basis.
 - Convolve all counts. Call the output in `convolved_count`.
 - Print the output shape
 </div>
@@ -822,7 +822,7 @@ Since this time we are convolving more than one neuron, we need to reset the exp
 <div class="render-user">
 ```{code-cell} ipython3
 # reset the input shape by passing the pop. count
-basis
+basis =
 # convolve all the neurons
 convolved_count = 
 ```
@@ -860,6 +860,13 @@ maximizing each individual term separately (i.e. fitting one neuron at the time)
 - Print the shape of the estimated coefficients.
 </div>
 
+<div class="render-user">
+```{code-cell} ipython3
+model =
+print(f"Model coefficients shape: {model.coef_.shape}")
+```
+</div>
+
 ```{code-cell} ipython3
 model = nmo.glm.PopulationGLM(
     regularizer="Ridge",
@@ -876,6 +883,12 @@ Predict the rate (counts are already sorted by tuning prefs)
 <div class="render-user">
 - Predict the firing rate of each neuron. Call it `predicted_firing_rate`.
 - Convert the rate from spike/bin to spike/sec.
+</div>
+
+<div class="render-user">
+```{code-cell} ipython3
+predicted_firing_rate =
+```
 </div>
 
 ```{code-cell} ipython3
@@ -915,19 +928,6 @@ fig = doc_plots.plot_rates_and_smoothed_counts(
 ```
 
 #### Visualizing the connectivity
-Compute the tuning curve form the predicted rates.
-
-<div class="render-user">
-- Compute tuning curves from the predicted rates using pynapple.
-- Store the output of pynapple in a single variable, call it `tuning `.
-</div>
-
-```{code-cell} ipython3
-tuning = nap.compute_1d_tuning_curves_continuous(predicted_firing_rate,
-                                                 feature=angle,
-                                                 nb_bins=61,
-                                                 minmax=(0, 2 * np.pi))
-```
 
 Extract the weights and store it in a `(n_neurons, n_neurons, n_basis_funcs)` array. 
 
@@ -946,6 +946,13 @@ You can use the `split_by_feature` method of `basis` for this.
 <div class="render-user">
 - Reshape the weights with `basis.split_by_feature` (returns a dictionary).
 </div>
+
+<div class="render-all">
+
+![Reshape coefficients](../../_static/coeff_reshape.png)
+
+</div>
+
 
 <div class="render-user">
 ```{code-cell} ipython3
@@ -988,7 +995,11 @@ print(f"Re-shaped coeff: {weights.shape}")
 
 Multiply the weights by the basis, to get the history filters.
 
+
+
 ```{code-cell} ipython3
+:tags: [render-all]
+
 responses = np.einsum("jki,tk->ijt", weights, basis_kernels)
 
 print(responses.shape)
@@ -1003,6 +1014,12 @@ all the coupling filters.
 
 ```{code-cell} ipython3
 :tags: [render-all]
+
+tuning = nap.compute_1d_tuning_curves_continuous(predicted_firing_rate,
+                                                 feature=angle,
+                                                 nb_bins=61,
+                                                 minmax=(0, 2 * np.pi))
+                                                 
 fig = doc_plots.plot_coupling(responses, tuning)
 ```
 
