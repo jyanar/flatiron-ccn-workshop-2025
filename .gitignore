@@ -172,3 +172,6 @@ data/
 
 *nwb
 .DS_Store
+
+# local build folder
+_build/
