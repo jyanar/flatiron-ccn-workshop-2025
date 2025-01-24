@@ -56,7 +56,9 @@ There are many ways to set up a python virtual environment. You can use your fav
 ::::{tab-item} Windows
 :sync: windows
 
-1. Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/) by opening up powershell and running:
+Open up `powershell`, then:
+
+1. Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/):
    ```powershell
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
@@ -228,6 +230,8 @@ jupyter lab
     conda init powershell 
     ```
   - Restart the powershell and check that conda is in the path. Run for example `conda --version`.
+- If you see `sys:1: DeprecationWarning: Call to deprecated function (or staticmethod) _destroy.` when running `python scripts/setup.py`, we don't think this is actually a problem. As long as `check_setup.py` says everything looks good, you're fine!
+
 
 ## Binder
 

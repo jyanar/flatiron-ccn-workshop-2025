@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import numpy as np
-from nemos.basis._basis import Basis
+from nemos.basis._basis import Basis, AdditiveBasis
 from typing import Literal, Union, Callable, List
 from numpy.typing import NDArray
 
 
 BLOCK_STRUCTURE_TYPES = Union[Literal['all', 'none', 'self'], Callable]
 
+__all__ = ["create_feature_mask", "create_feature_mask_paramgrid"]
 
 def create_feature_mask(design_matrix_basis: Basis,
                         block_structure: Union[List[BLOCK_STRUCTURE_TYPES], BLOCK_STRUCTURE_TYPES] = 'all',
@@ -73,3 +74,33 @@ def create_feature_mask(design_matrix_basis: Basis,
             mask[shape_sum:shape_sum+s] = m
         shape_sum += s
     return mask
+
+
+def create_feature_mask_paramgrid(basis: AdditiveBasis,
+                                  basis1_n_basis_funcs: List[int],
+                                  basis2_n_basis_funcs: List[int],
+                                  n_neurons: int):
+    param_grid = []
+    # include all position (basis1), exclude all speed (basis2)
+    for b1 in basis1_n_basis_funcs:
+        basis.basis1.n_basis_funcs = b1
+        basis.basis2.n_basis_funcs = basis2_n_basis_funcs[0]
+        param_grid.append({"glm__feature_mask": [create_feature_mask(basis, ["all", "none"], n_neurons=n_neurons)],
+                           "basis__basis1__n_basis_funcs": [b1], "basis__basis2__n_basis_funcs": [basis2_n_basis_funcs[0]]})
+
+    # include all speed, exclude all position
+    for b2 in basis2_n_basis_funcs:
+        basis.basis2.n_basis_funcs = b2
+        basis.basis1.n_basis_funcs = basis1_n_basis_funcs[0]
+        param_grid.append({"glm__feature_mask": [create_feature_mask(basis, ["none", "all"], n_neurons=n_neurons)],
+                           "basis__basis1__n_basis_funcs": [basis1_n_basis_funcs[0]], "basis__basis2__n_basis_funcs": [b2]})
+
+    # exclude all of both
+    for b1 in basis1_n_basis_funcs:
+        for b2 in basis2_n_basis_funcs:
+            basis.basis1.n_basis_funcs = b1
+            basis.basis2.n_basis_funcs = b2
+            param_grid.append({"glm__feature_mask": [create_feature_mask(basis, "all", n_neurons=n_neurons)],
+                               "basis__basis1__n_basis_funcs": [b1], "basis__basis2__n_basis_funcs": [b2]})
+
+    return param_grid

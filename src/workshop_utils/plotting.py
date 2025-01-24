@@ -535,20 +535,17 @@ def plot_position_speed(position: nap.Tsd, speed: nap.Tsd,
 
 
 def plot_position_speed_tuning(position_tuning: pd.DataFrame, speed_tuning: pd.DataFrame,
-                               neuron_id: Union[int, List[int]],
                                model_position_tuning: Optional[pd.DataFrame] = None,
                                model_speed_tuning: Optional[pd.DataFrame] = None):
-    if not hasattr(neuron_id, "__iter__"):
-        neuron_id = [neuron_id]
-    fig = plt.figure(figsize=(6*len(neuron_id), 3))
-    gs = plt.GridSpec(1, 2*len(neuron_id), wspace=.3, hspace=.35)
+    fig = plt.figure(figsize=(6*position_tuning.shape[1], 3))
+    gs = plt.GridSpec(1, 2*position_tuning.shape[1], wspace=.3, hspace=.35)
     pos_ax = None
     speed_ax = None
-    for i, n in enumerate(neuron_id):
+    for i, n in enumerate(position_tuning.columns):
         ax = fig.add_subplot(gs[0, 2*i], sharey=pos_ax, sharex=pos_ax)
         ax.plot(position_tuning[n], '--')
         if model_position_tuning is not None:
-            ax.plot(model_position_tuning[n])
+            ax.plot(model_position_tuning[i])
         ax.set(xlabel="Position (cm)", ylabel="Firing rate (Hz)", title="Position tuning")
         ax.text(1, 1.2, f"Neuron {n}", transform=ax.transAxes, size="x-large")
         if pos_ax is None:
@@ -557,7 +554,7 @@ def plot_position_speed_tuning(position_tuning: pd.DataFrame, speed_tuning: pd.D
         ax = fig.add_subplot(gs[0, 2*i+1], sharex=speed_ax, sharey=pos_ax)
         ax.plot(speed_tuning[n], '--')
         if model_speed_tuning is not None:
-            ax.plot(model_speed_tuning[n])
+            ax.plot(model_speed_tuning[i])
         ax.set(ylabel="Firing rate (Hz)", xlabel="Speed (cm/s)", title="Speed tuning")
         if speed_ax is None:
             speed_ax = ax
