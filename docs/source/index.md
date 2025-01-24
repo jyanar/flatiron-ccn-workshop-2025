@@ -208,13 +208,33 @@ jupyter lab
 
   (On Windows, replace `$(realpath ..)` with the path to the `ccn-software-jan-2025` directory.)
 - We have noticed jupyter notebooks behaving a bit odd in Safari --- if you are running/editing jupyter in Safari and the behavior seems off (scrolling not smooth, lag between creation and display of cells), try a different browser. We've had better luck with Firefox or using the arrow keys to navigate between cells.
+- On **Windows + conda**: if after installing conda, the path are not set correctly, you may encounter this error message: 
+   ```
+   conda : The term 'conda' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+   ```
+  In this case, you can try the following steps:
+  - Locate the path to the `condabin` folder. The path should look like: `some-folder-path\Miniforge3\condabin`. 
+  
+    The following powershell command could be useful (note that i am starting form C: as a root, but you can change that): 
+    ```
+    Get-ChildItem -Path C:\ -Directory -Recurse -Filter "condabin" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
+    ```
+  - Temporarily add conda to the paths: 
+    ```
+    $env:Path += ";some-folder-path\Miniforge3\condabin"
+    ```
+  - Initialize conda:
+    ```
+    conda init powershell 
+    ```
+  - Restart the powershell and check that conda is in the path. Run for example `conda --version`.
 
 ## Binder
 
 A binder instance (a virtual environment running on Flatiron's cluster) is provided in case we cannot get your installation working. To access it, click the "launch binder" button in the top left of this site or click [here](https://binder.flatironinstitute.org/v2/user/wbroderick/jan2025?labpath=notebooks).
 
 Some usage notes:
-
+history
 - You must login with the email address you provided when registering for the workshop. If you need to use a different email, find Billy and give him the new email address.
 - You are only allowed to have a single binder instance running at a time, so if you get the "already have an instance running error", go to the [binderhub page](https://binder.flatironinstitute.org/hub/hub/home) (or click on "check your currently running servers" on the right of the page) to join your running instance.
 - If you lose connection halfway through the workshop, go to the [binderhub page](https://binder.flatironinstitute.org/hub/hub/home) to join your running instance rather than restarting the image.
