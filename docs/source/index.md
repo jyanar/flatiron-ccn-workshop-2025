@@ -56,7 +56,9 @@ There are many ways to set up a python virtual environment. You can use your fav
 ::::{tab-item} Windows
 :sync: windows
 
-1. Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/) by opening up powershell and running:
+Open up `powershell`, then:
+
+1. Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/):
    ```powershell
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
    ```
