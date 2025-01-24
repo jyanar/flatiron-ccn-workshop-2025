@@ -283,7 +283,6 @@ For the first, we can use the `IntervalSet` method `time_span`, which will give 
 </div>
 
 <div class="render-user">
-
 ```{code-cell} ipython3
 awake_ep =
 ```
@@ -302,7 +301,6 @@ For the second, we know that the animal is likely at rest when there is no recor
 </div>
 
 <div class="render-user">
-
 ```{code-cell} ipython3
 # drop nan values
 pos_good = 
@@ -324,7 +322,6 @@ pos_good
 </div>
 
 <div class="render-user">
-
 ```{code-cell} ipython3
 # extract time support
 position_ep = 
@@ -463,7 +460,6 @@ We must define the frequency set that we'd like to use for our decomposition. We
 </div>
 
 <div class="render-user">
-    
 ```{code-cell} ipython3
 # 100 log-spaced samples between 5Hz and 200Hz
 freqs = 
@@ -483,8 +479,7 @@ We can now compute the wavelet transform on our LFP data during the example run 
 
 </div>
 
-<div class="render-user">
-    
+<div class="render-user">  
 ```{code-cell} ipython3
 sample_rate = 1250
 cwt_run =
@@ -547,8 +542,6 @@ ax.legend([p1[0], p2[0]],["raw LFP","animal position"])
 As we would expect, there is a strong presence of theta in the 6-12Hz frequency band while the animal runs down the track, which dampens during rest.
 
 </div>
-
-+++
 
 ***
 ## Bonus: Additional signal processing methods
@@ -665,8 +658,7 @@ Using this function, filter `lfp_run` within a 6-12 Hz range.
 
 </div>
 
-<div class="render-user">
-    
+<div class="render-user">   
 ```{code-cell} ipython3
 theta_band = 
 ```
@@ -705,8 +697,7 @@ The `signal` module of `scipy` includes a function to perform the Hilbert transf
 
 </div>
 
-<div class="render-user">
-    
+<div class="render-user"> 
 ```{code-cell} ipython3
 phase = 
 ```
@@ -733,8 +724,7 @@ Finally, we need to turn this into a `Tsd` to make full use of pynapple's conven
 
 </div>
 
-<div class="render-user">
-    
+<div class="render-user">  
 ```{code-cell} ipython3
 theta_phase = 
 ```
@@ -817,7 +807,6 @@ First, we'll filter for units that fire at least 1 Hz and at most 10 Hz when the
 
 
 <div class="render-user">
-    
 ```{code-cell} ipython3
 forward_spikes =
 ```
@@ -837,7 +826,6 @@ forward_spikes = spikes.restrict(forward_ep)
 </div>
 
 <div class="render-user">
-
 ```{code-cell} ipython3
 good_spikes = 
 ```
@@ -868,7 +856,6 @@ The reason `nap.compute_1d_tuning_curves` returns a `pandas.DataFrame` and not a
 :::
 
 <div class="render-user">
-
 ```{code-cell} ipython3
 place_fields = 
 ```
@@ -919,8 +906,7 @@ First, let's look at how an example unit fires with respect to the filtered LFP.
 
 </div>
 
-<div class="render-user">
-    
+<div class="render-user">  
 ```{code-cell} ipython3
 unit = 177
 spike_theta = 
@@ -962,8 +948,7 @@ We can exemplify this pattern by plotting the spike times aligned to the phase o
 
 </div>
 
-<div class="render-user">
-    
+<div class="render-user">  
 ```{code-cell} ipython3
 spike_phase = 
 ```
@@ -1008,7 +993,6 @@ We can observe this phenomena on average across all runs by relating the spike p
 </div>
 
 <div class="render-user">
-
 ```{code-cell} ipython3
 spike_position = 
 ```
@@ -1049,8 +1033,7 @@ To use this function, we'll need to combine `position` and `theta_phase` into a 
 
 </div>
 
-<div class="render-user">
-    
+<div class="render-user"> 
 ```{code-cell} ipython3
 upsampled_pos = 
 ```
@@ -1082,8 +1065,7 @@ We can now stack `upsampled_pos` and `theta_phase` into a single array.
 
 </div>
 
-<div class="render-user">
-    
+<div class="render-user">  
 ```{code-cell} ipython3
 feats = 
 ```
@@ -1101,7 +1083,6 @@ Using `feats`, we can define a `TsdFrame` using the time index from `theta_phase
 </div>
 
 <div class="render-user">
-
 ```{code-cell} ipython3
 features =
 ```
@@ -1124,7 +1105,6 @@ The output of this function will be different now that the tuning curves are 2D.
 </div>
 
 <div class="render-user">
-
 ```{code-cell} ipython3
 tuning_curves, [pos_x, phase_y] =
 ```
