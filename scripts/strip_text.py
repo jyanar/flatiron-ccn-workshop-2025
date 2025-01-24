@@ -82,7 +82,7 @@ for md in glob("docs/source/full/*/*md"):
         elif "<div" in t and "render" in t:
             if "render-user" in t or "render-all" in t:
                 # remove all divs
-                t = re.sub(".*div.*", "", t)
+                t = re.sub("\s*</?div.*", "", t)
                 user_text.append(t)
         elif "{code-cell}" in t:
             if "render-all" in t:
