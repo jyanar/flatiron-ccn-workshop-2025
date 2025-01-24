@@ -76,13 +76,13 @@ for md in glob("docs/source/full/*/*md"):
     user_text = []
     empty_code_cell = "```{code-cell}\n# enter code here\n```\n"
     for t in preserved_text:
-        if ":::" in t:
-            if "render-user" in t or "render-all" in t:
-                user_text.append(t)
-        elif "<div" in t and "render" in t:
+        if "<div" in t and "render" in t:
             if "render-user" in t or "render-all" in t:
                 # remove all divs
-                t = re.sub(".*div.*", "", t)
+                t = re.sub("\s*</?div.*", "", t)
+                user_text.append(t)
+        elif ":::" in t:
+            if "render-user" in t or "render-all" in t:
                 user_text.append(t)
         elif "{code-cell}" in t:
             if "render-all" in t:

@@ -30,7 +30,7 @@ def main():
     nb_dir = repo_dir / 'notebooks'
     scripts_dir = repo_dir / 'scripts'
     src_dir = repo_dir / 'src'
-    print("Downloading data...")
+    print("Checking whether we need to download data...")
     workshop_utils.fetch_all()
     docs_nb_dir = repo_dir / 'docs' / 'source' / 'users'
     print("Preparing notebooks...")
