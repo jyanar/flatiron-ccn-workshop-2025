@@ -12,7 +12,7 @@ from nemos import _documentation_utils as doc_plots
 
 __all__ = ["plot_features", "animate_1d_convolution", "plot_head_direction_tuning_model", "plot_feature_mask",
            "plot_heatmap_cv_results", "plot_position_speed",
-           "plot_position_speed_tuning", "plot_place_fields", "plot_pos_speed_bases"]
+           "plot_position_speed_tuning", "plot_place_fields", "plot_pos_speed_bases", "visualize_intervals"]
 
 def plot_features(
     input_feature: Union[nap.Tsd, nap.TsdFrame, nap.TsdTensor, NDArray],
@@ -590,4 +590,15 @@ def plot_pos_speed_bases(position_basis, speed_basis):
         time, kernel = bas.evaluate_on_grid(100)
         ax.plot(time, kernel)
         ax.set_title(t)
+
+def visualize_intervals(eps):
+    fig, axes = plt.subplots(1, 1, figsize=(6, 3))
+    colors = plt.cm.rainbow(np.linspace(0, 1, len(eps)))
+    ypos = np.linspace(0, 1, len(eps)+2)[1:-1]
+    lgt = 1/(len(eps)**2)  
+    for i, ep in enumerate(eps):
+        for s, e in ep.values:
+            plt.axvspan(xmin=s, xmax=e, ymin=ypos[i]-lgt, ymax=ypos[i]+lgt, color=colors[i])
+    plt.xlabel("Time (s)")
+    plt.ylabel("Epochs")    
 

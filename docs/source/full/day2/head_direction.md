@@ -413,6 +413,7 @@ We can visualize the output for a few time bins
 
 ```{code-cell} ipython3
 :tags: [render-all]
+
 suptitle = "Input feature: Count History"
 neuron_id = 0
 workshop_utils.plot_features(input_feature, count.rate, suptitle);
@@ -802,7 +803,6 @@ doc_plots.plot_rates_and_smoothed_counts(
 );
 ```
 
-
 ### All-to-all Connectivity
 The same approach can be applied to the whole population. Now the firing rate of a neuron
 is predicted not only by its own count history, but also by the rest of the
@@ -936,7 +936,6 @@ Extract the weights and store it in a `(n_neurons, n_neurons, n_basis_funcs)` ar
 </div>
 
 ```{code-cell} ipython3
-
 # original shape of the weights
 print(f"GLM coeff: {model.coef_.shape}")
 ```
@@ -995,8 +994,6 @@ print(f"Re-shaped coeff: {weights.shape}")
 
 Multiply the weights by the basis, to get the history filters.
 
-
-
 ```{code-cell} ipython3
 :tags: [render-all]
 
@@ -1022,4 +1019,3 @@ tuning = nap.compute_1d_tuning_curves_continuous(predicted_firing_rate,
                                                  
 fig = doc_plots.plot_coupling(responses, tuning)
 ```
-
