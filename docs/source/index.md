@@ -135,12 +135,6 @@ Due to [recent changes](https://www.anaconda.com/blog/update-on-anacondas-terms-
     :::
     ::::
 
-    :::{note}
-    
-    If you are on Mac and get an error related to `ruamel.yaml` (or `clang`), we think this can be fixed by updating your Xcode Command Line Tools.
-    
-    :::
-
 2. Run our setup script to download data and prepare the notebooks:
     ```shell
     python scripts/setup.py
@@ -200,25 +194,20 @@ jupyter lab
 
 ::::::
 
-:::{warning}
+## Troubleshooting
 
-If you have multiple jupyter installs on your path (because e.g., because you have an existing jupyter installation in a conda environment and you then used `uv` to setup the virtual environment for this workshop), jupyter can get confused. (You can check if this is the case by running `which -a jupyter` on Mac / Linux.)
+- If you are on Mac and get an error related to `ruamel.yaml` (or `clang`) when running `pip install -e .`, we think this can be fixed by updating your Xcode Command Line Tools.
+- On Windows, you may receive an error saying "running scripts is disabled on this system" when trying to activate the virtual environment. If so, run `Set-ExecutionPolicy -Scope CurrentUser` and enter `Unrestricted`, then press `Y`. (You may have to do this every time you open powershell.)
+- When creating the conda environment, you may get errors related to accessing the `defaults` channel. Due to [recent changes](https://www.anaconda.com/blog/update-on-anacondas-terms-of-service-for-academia-and-research) to Anaconda's Terms of Service, the Simons Foundation cannot use the `defaults` conda channel and it is blocked on all Flatiron Institute wireless networks. You need to specify `conda-forge` instead (which is community-managed and open to all). (The instructions above should do so.)
+- If you have multiple jupyter installs on your path (because e.g., because you have an existing jupyter installation in a conda environment and you then used `uv` to setup the virtual environment for this workshop), jupyter can get confused. (You can check if this is the case by running `which -a jupyter` on Mac / Linux.)
+  To avoid this problem, either make sure you only have one virtual environment active (e.g., by running `conda deactivate`) or prepend `JUPYTER_DATA_DIR=$(realpath ..)/.venv/share/jupyter/` to your jupyter command above:
 
-To avoid this problem, either make sure you only have one virtual environment active (e.g., by running `conda deactivate`) or prepend `JUPYTER_DATA_DIR=$(realpath ..)/.venv/share/jupyter/` to your jupyter command above:
+  ```shell
+  JUPYTER_DATA_DIR=$(realpath ..)/.venv/share/jupyter/ jupyter lab
+  ```
 
-```shell
-JUPYTER_DATA_DIR=$(realpath ..)/.venv/share/jupyter/ jupyter lab
-```
-
-On Windows, replace `$(realpath ..)` with the path to the `ccn-software-jan-2025` directory.
-
-:::
-
-:::{warning}
-
-We have noticed jupyter notebooks behaving a bit odd in Safari --- if you are running/editing jupyter in Safari and the behavior seems off (scrolling not smooth, lag between creation and display of cells), try a different browser. We've had luck with Firefox.
-
-:::
+  (On Windows, replace `$(realpath ..)` with the path to the `ccn-software-jan-2025` directory.)
+- We have noticed jupyter notebooks behaving a bit odd in Safari --- if you are running/editing jupyter in Safari and the behavior seems off (scrolling not smooth, lag between creation and display of cells), try a different browser. We've had better luck with Firefox or using the arrow keys to navigate between cells.
 
 ## Binder
 
