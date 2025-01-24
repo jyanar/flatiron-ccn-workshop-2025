@@ -1,11 +1,27 @@
 #!/usr/bin/env python3
 
-import click
+try:
+    import click
+    import pynapple
+    import nemos
+except ImportError:
+    raise ImportError(
+        "We couldn't find an important package, which likely means"
+        " we're not running from the right virtual "
+        "environment! Did you forget to activate your virtual env"
+        " (using `source` or `conda activate`, depending on how "
+        "you set it up)"
+    )
 import pathlib
 import shutil
 import subprocess
 import re
 import os
+import warnings
+with warnings.catch_warnings():
+    # will give a warning about documentation utils
+    warnings.simplefilter("ignore")
+    import workshop_utils
 
 
 @click.command()
@@ -14,11 +30,10 @@ def main():
     nb_dir = repo_dir / 'notebooks'
     scripts_dir = repo_dir / 'scripts'
     src_dir = repo_dir / 'src'
-    env = os.environ.copy()
-    env['NEMOS_DATA_DIR'] = env.get("NEMOS_DATA_DIR", repo_dir / "data")
-    subprocess.run(['python', src_dir / 'workshop_utils' / 'fetch.py'], cwd=repo_dir,
-                   env=env)
+    print("Downloading data...")
+    workshop_utils.fetch_all()
     docs_nb_dir = repo_dir / 'docs' / 'source' / 'users'
+    print("Preparing notebooks...")
     shutil.rmtree(docs_nb_dir, ignore_errors=True)
     shutil.rmtree(repo_dir / 'docs' / 'source' / 'presenters', ignore_errors=True)
     subprocess.run(['python', repo_dir / 'scripts' / 'strip_text.py'], cwd=repo_dir)

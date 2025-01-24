@@ -20,22 +20,22 @@ Before the workshop, please try to complete the following steps. If you are unab
 
 There are many ways to set up a python virtual environment. You can use your favorite way of doing so. If you don't have a preference or don't know what to do, choose one of the following:
 
-:::::{tab-set}
+:::::::{tab-set}
 :sync-group: category
 
-::::{tab-item} uv
+::::::{tab-item} uv
 :sync: uv
 
-1. Install `uv`. On Mac or Linux, run:
+:::::{tab-set}
+:sync-group: os
+
+::::{tab-item} Mac/Linux
+:sync: posix
+
+1. Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/) by running:
    ```shell
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
-   
-   On Windows, run:
-   ```powershell
-   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-   ```
-
 2. Install python 3.11:
    ```shell
    uv python install 3.11
@@ -47,14 +47,47 @@ There are many ways to set up a python virtual environment. You can use your fav
    uv venv -p 3.11
    ```
    
-4. Activate your new virtual environment:
+4. Activate your new virtual environment by running:
    ```shell
    source .venv/bin/activate
    ```
-
 ::::
 
-::::{tab-item} conda / miniforge
+::::{tab-item} Windows
+:sync: windows
+
+1. Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/) by opening up powershell and running:
+   ```powershell
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+2. Install python 3.11:
+   ```powershell
+   uv python install 3.11
+   ```
+   
+3. Navigate to your cloned repo and create a new virtual environment:
+   ```powershell
+   cd ccn-software-jan-2025
+   uv venv -p 3.11
+   ```
+   
+4. Activate your new virtual environment by running:
+   ```powershell
+   .venv\Scripts\activate
+   ```
+
+   :::{warning}
+   You may receive an error saying "running scripts is disabled on this system". If so, run `Set-ExecutionPolicy -Scope CurrentUser` and enter `Unrestricted`, then press `Y`.
+   
+   You may have to do this every time you open powershell.
+   
+   :::
+
+::::
+:::::
+::::::
+
+::::::{tab-item} conda / miniforge
 :sync: conda
 
 :::{warning}
@@ -75,16 +108,32 @@ Due to [recent changes](https://www.anaconda.com/blog/update-on-anacondas-terms-
     conda activate ccn-jan25
     cd ccn-software-jan-2025
     ```
-::::
+::::::
 
-:::::
+:::::::
 
 #### Install dependencies and setup notebooks
     
 1. Install the required dependencies. This will install pynapple and nemos, as well as jupyter and several other packages.
+    ::::{tab-set}
+    :sync-group: category
+    
+    :::{tab-item} uv
+    :sync: uv
+
+    ```shell
+    uv pip install -e .
+    ```
+    :::
+
+    :::{tab-item} conda
+    :sync: conda
+
     ```shell
     pip install -e .
     ```
+    :::
+    ::::
 
     :::{note}
     
@@ -101,27 +150,44 @@ Due to [recent changes](https://www.anaconda.com/blog/update-on-anacondas-terms-
     python scripts/check_setup.py
     ```
 
-If `check_setup.py` tells you setup was successful, then you're good to go. Otherwise, please come to the installation help session on Wednesday, so everyone is ready to get started Thursday morning.
+If `check_setup.py` tells you setup was successful, check that you can run `jupyter lab notebooks/day2/current_injection-users.ipynb` and run the first few cells (up until the one containing `path = workshop_utils.fetch_data("allen_478498617.nwb")`). If that all works, then you're good to go. Otherwise, please come to the installation help session on Wednesday, so everyone is ready to get started Thursday morning.
 
 After doing the above, the `data/` and `notebooks/` directories within your local copy of the `ccn-software-jan-2025` repository will contain the NWB files and jupyter notebooks for the workshop.
 
 On the day of the workshop, we will run through the notebooks in the order they're listed on this website. To open them, navigate to the `notebooks/` directory, activate your virtual environment and start `jupyter lab`:
 
-::::{tab-set}
+::::::{tab-set}
 :sync-group: category
 
-:::{tab-item} uv
+:::::{tab-item} uv
 :sync: uv
+
+::::{tab-set}
+:sync-group: os
+
+:::{tab-item} Mac/Linux
+:sync: posix
 
 ```shell
 cd path/to/ccn-software-jan-2025/notebooks
 source ../.venv/bin/activate
 jupyter lab
 ```
-
 :::
 
-:::{tab-item} conda / miniforge
+:::{tab-item} Windows
+:sync: windows
+
+```powershell
+cd path\to\ccn-software-jan-2025\notebooks
+..\.venv\Scripts\activate
+jupyter lab
+```
+:::
+
+:::::
+
+:::::{tab-item} conda / miniforge
 :sync: conda
 
 ```shell
@@ -130,9 +196,9 @@ conda activate ccn-jan25
 jupyter lab
 ```
 
-:::
+:::::
 
-::::
+::::::
 
 :::{warning}
 
