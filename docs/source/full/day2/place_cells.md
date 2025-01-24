@@ -177,9 +177,12 @@ workshop_utils.plot_place_fields(place_fields)
 
 ```{code-cell} ipython3
 :tags: [render-all]
-neurons = [92, 82, 220]
+
+neurons = [82, 92, 220]
+place_fields = place_fields[neurons]
+spikes = spikes[neurons]
 bin_size = .01
-count = spikes[neurons].count(bin_size, ep=position.time_support)
+count = spikes.count(bin_size, ep=position.time_support)
 position = position.interpolate(count, ep=count.time_support)
 print(count.shape)
 print(position.shape)
@@ -196,9 +199,9 @@ The speed at which the animal traverse the field is not homogeneous. Does it inf
 
 </div>
 
-
 ```{code-cell} ipython3
 :tags: [render-all]
+
 speed = []
 # Analyzing each epoch separately avoids edge effects.
 for s, e in position.time_support.values: 
@@ -223,11 +226,13 @@ Now that we have the speed of the animal, we can compute the tuning curves for s
 </div>
 
 ```{code-cell} ipython3
-tc_speed = nap.compute_1d_tuning_curves(spikes, speed, 20)
+tc_speed = nap.compute_1d_tuning_curves(spikes, speed, 20, speed.time_support)
 ```
 
 <div class="render-user">
+
 ```{code-cell} ipython3
+:tags: [remove-cell, skip-execution]
 # compute tuning curve here
 tc_speed = 
 ```
@@ -240,9 +245,9 @@ tc_speed =
 - Visualize the position and speed tuning for these neurons.
 </div>
 
-
 ```{code-cell} ipython3
 :tags: [render-all]
+
 fig = workshop_utils.plot_position_speed(position, speed, place_fields, tc_speed, neurons);
 ```
 
@@ -284,7 +289,6 @@ Instead, NeMoS allows us to combine multiple basis objects into a single "additi
 - Combine the two basis objects into a single "additive basis"
 </div>
 
-
 ```{code-cell} ipython3
 basis = position_basis + speed_basis
 ```
@@ -295,7 +299,6 @@ basis = position_basis + speed_basis
 - Notice that, since we passed the basis pynapple objects, we got one back, preserving the time stamps.
 
 </div>
-
 
 ```{code-cell} ipython3
 X = basis.compute_features(position, speed)
@@ -318,17 +321,16 @@ As we've done before, we can now use the Poisson GLM from NeMoS to learn the com
 
 ```{code-cell} ipython3
 :tags: [skip-execution]
+
 # initialize 
 glm =
 
 # and fit
-
 ```
 
 </div>
 
 ```{code-cell} ipython3
-
 glm = nmo.glm.PopulationGLM(
     solver_kwargs={"tol": 1e-12},
     solver_name="LBFGS",
@@ -356,13 +358,6 @@ Let's check first if our model can accurately predict the tuning curves we displ
 # predict the model's firing rate
 predicted_rate = 
 
-# recreate TsdFrame so we can rename columns
-predicted_rate = nap.TsdFrame(
-    t=predicted_rate.t,
-    d=predicted_rate.d,
-    columns=sorted(neurons),
-)
-
 # compute the position and speed tuning curves using the predicted firing rate.
 glm_pf = 
 glm_speed = 
@@ -370,18 +365,13 @@ glm_speed =
 
 </div>
 
-
 ```{code-cell} ipython3
+# predict the model's firing rate
 predicted_rate = glm.predict(X) / bin_size
-# recreate so we can rename columns
-predicted_rate = nap.TsdFrame(
-    t=predicted_rate.t,
-    d=predicted_rate.d,
-    columns=sorted(neurons),
-)
 
-glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50)
-glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30)
+# compute the position and speed tuning curves using the predicted firing rate.
+glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50, position.time_support)
+glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30, speed.time_support)
 ```
 
 <div class="render-user render-presenter">
@@ -392,7 +382,27 @@ glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30)
 
 ```{code-cell} ipython3
 :tags: [render-all]
-workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
+
+workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, glm_pf, glm_speed);
+```
+
+<div class="render-all">
+
+To make our lives easier, let's create a helper function that wraps the above
+lines, because we're going to be visualizing our model predictions a lot.
+
+</div>
+
+```{code-cell} ipython3
+def visualize_model_predictions(glm, X):
+    # predict the model's firing rate
+    predicted_rate = glm.predict(X) / bin_size
+
+    # compute the position and speed tuning curves using the predicted firing rate.
+    glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50, position.time_support)
+    glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30, position.time_support)
+
+    workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, glm_pf, glm_speed);
 ```
 
 ## Scikit-learn
@@ -430,7 +440,6 @@ param_grid = {
 - Initialize scikit-learn's [`GridSearchCV`](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html#sklearn.model_selection.GridSearchCV) object.
 </div>
 
-
 ```{code-cell} ipython3
 cv = model_selection.GridSearchCV(glm, param_grid, cv=cv_folds)
 cv
@@ -442,7 +451,6 @@ cv
 - In particular, call `fit` with same arguments:
 </div>
 
-
 ```{code-cell} ipython3
 cv.fit(X, count)
 ```
@@ -452,7 +460,6 @@ cv.fit(X, count)
 - We got a warning because we didn't specify the regularizer strength, so we just fell back on default value.
 - Let's investigate results:
 </div>
-
 
 ```{code-cell} ipython3
 cv.cv_results_
@@ -487,7 +494,6 @@ Unlike the glm objects, our basis objects are not scikit-learn compatible right 
 - But we have provided a simple method to make them so:
 
 </div>
-
 
 ```{code-cell} ipython3
 position_basis = nmo.basis.MSplineEval(n_basis_funcs=10).to_transformer()
@@ -559,8 +565,9 @@ Create our input:
 - Create a single TsdFrame to hold all our inputs:
 </div>
 
-
 ```{code-cell} ipython3
+:tags: [render-all]
+
 transformer_input = nap.TsdFrame(
     t=position.t,
     d=np.stack([position.d, speed.d], 1),
@@ -573,7 +580,6 @@ transformer_input = nap.TsdFrame(
 
 - Pass this input to our transformed additive basis:
 </div>
-
 
 ```{code-cell} ipython3
 basis.transform(transformer_input)
@@ -591,7 +597,6 @@ Pipelines are objects that accept a series of (0 or more) transformers, culminat
 - [Pipelines](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html) to the rescue!
 
 </div>
-
 
 ```{code-cell} ipython3
 pipe = pipeline.Pipeline([
@@ -612,51 +617,16 @@ This pipeline object allows us to e.g., call fit using the *initial input*:
 pipe.fit(transformer_input, count)
 ```
 
+We then visualize the predictions the same as before, using `pipe` instead of `glm`.
+
 <div class="render-user render-presenter">
 
-Just like before:
-- Use `predict` to check whether our GLM has captured each neuron's speed and position tuning.
-- Remember to convert the predicted firing rate to spikes per second!
-</div>
-
-<div class="render-user">
-
-```{code-cell} ipython3
-:tags: [skip-execution]
-
-# predict the model's firing rate -- remember to use the pipe object!
-predicted_rate = 
-
-# recreate TsdFrame so we can rename columns
-predicted_rate = nap.TsdFrame(
-    t=predicted_rate.t,
-    d=predicted_rate.d,
-    columns=sorted(neurons),
-)
-
-# compute the position and speed tuning curves using the predicted firing rate.
-glm_pf = 
-glm_speed = 
-
-workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
-```
+- Visualize model predictions!
 
 </div>
 
-
 ```{code-cell} ipython3
-predicted_rate = pipe.predict(transformer_input) / bin_size
-# recreate so we can rename columns
-predicted_rate = nap.TsdFrame(
-    t=predicted_rate.t,
-    d=predicted_rate.d,
-    columns=sorted(neurons),
-)
-
-glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50)
-glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30)
-
-workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
+visualize_model_predictions(pipe, transformer_input)
 ```
 
 ### Cross-validating on the basis
@@ -679,7 +649,6 @@ Let's cross-validate on:
 - The functional form of the basis for speed
 </div>
 
-
 ```{code-cell} ipython3
 print(pipe["basis"].basis1.n_basis_funcs)
 print(pipe["basis"].basis2)
@@ -691,7 +660,6 @@ For scikit-learn parameter grids, we use `__` to stand in for `.`:
 
 - Construct `param_grid`, using `__` to stand in for `.`
 </div>
-
 
 ```{code-cell} ipython3
 param_grid = {
@@ -716,7 +684,6 @@ cv.fit(transformer_input, count)
 
 - Investigate results:
 </div>
-
 
 ```{code-cell} ipython3
 cv.cv_results_
@@ -744,51 +711,17 @@ best_estim = cv.best_estimator_
 best_estim
 ```
 
+We then visualize the predictions of `best_estim` the same as before.
+
 <div class="render-user render-presenter">
 
-Just like before:
-- Use `predict` to check whether the predictions of our best estimator
-- Remember to convert the predicted firing rate to spikes per second!
-
-</div>
-
-<div class="render-user">
-
-```{code-cell} ipython3
-:tags: [skip-execution]
-
-# predict the model's firing rate -- using the best estimator!
-predicted_rate = 
-
-# recreate TsdFrame so we can rename columns
-predicted_rate = nap.TsdFrame(
-    t=predicted_rate.t,
-    d=predicted_rate.d,
-    columns=sorted(neurons),
-)
-
-# compute the position and speed tuning curves using the predicted firing rate.
-glm_pf = 
-glm_speed = 
-
-workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
-```
+- Visualize model predictions!
 
 </div>
 
 ```{code-cell} ipython3
-predicted_rate = cv.best_estimator_.predict(transformer_input) / bin_size
-# recreate so we can rename columns
-predicted_rate = nap.TsdFrame(
-    t=predicted_rate.t,
-    d=predicted_rate.d,
-    columns=sorted(neurons),
-)
-
-glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50)
-glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30)
-
-workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
+:tags: [render-all]
+visualize_model_predictions(best_estim, transformer_input)
 ```
 
 ### Feature selection
@@ -801,7 +734,6 @@ Now, finally, we understand almost enough about how scikit-learn works to do fea
 - Each `PopulationGLM` object has a feature mask, which allows us to exclude certain parts of the input
 - (By default, everything is included.)
 </div>
-
 
 ```{code-cell} ipython3
 pipe['glm'].feature_mask
@@ -818,7 +750,7 @@ workshop_utils.plot_feature_mask(pipe["glm"].feature_mask);
 </div>
 
 ```{code-cell} ipython3
-m = workshop_utils.create_feature_mask(pipe["basis"], n_neurons=3)
+m = workshop_utils.create_feature_mask(pipe["basis"], n_neurons=count.shape[1])
 workshop_utils.plot_feature_mask(m);
 ```
 
@@ -829,7 +761,7 @@ workshop_utils.plot_feature_mask(m);
 </div>
 
 ```{code-cell} ipython3
-m = workshop_utils.create_feature_mask(pipe["basis"], ["all", "none"], n_neurons=3)
+m = workshop_utils.create_feature_mask(pipe["basis"], ["all", "none"], n_neurons=count.shape[1])
 fig=workshop_utils.plot_feature_mask(m);
 ```
 
@@ -838,12 +770,11 @@ fig=workshop_utils.plot_feature_mask(m);
 - Can construct a set of feature masks that includes / excludes each of the sets of inputs:
 </div>
 
-
 ```{code-cell} ipython3
 feature_masks = [
-    workshop_utils.create_feature_mask(basis, "all", n_neurons=3),
-    workshop_utils.create_feature_mask(basis, ["all", "none"], n_neurons=3),
-    workshop_utils.create_feature_mask(basis, ["none", "all"], n_neurons=3),
+    workshop_utils.create_feature_mask(basis, "all", n_neurons=count.shape[1]),
+    workshop_utils.create_feature_mask(basis, ["all", "none"], n_neurons=count.shape[1]),
+    workshop_utils.create_feature_mask(basis, ["none", "all"], n_neurons=count.shape[1]),
 ]
 
 workshop_utils.plot_feature_mask(feature_masks, ["All", "Position", "Speed"]);
@@ -857,44 +788,17 @@ One more wrinkle: the shape of this feature mask depends on the number of basis 
 - Thus, must create a new feature mask for each possible arrangement:
 </div>
 
-
 ```{code-cell} ipython3
 :tags: [render-all]
 
-param_grid = []
-
-# number of basis functions to investigate
-b1_ns = [5, 10, 20]
-b2_ns = [8, 16, 32]
-
-# include all position (basis1), exclude all speed (basis2)
-for b1 in b1_ns:
-    basis.basis1.n_basis_funcs = b1
-    basis.basis2.n_basis_funcs = b2_ns[0]
-    param_grid.append({"glm__feature_mask": [workshop_utils.create_feature_mask(basis, ["all", "none"], n_neurons=3)],
-                       "basis__basis1__n_basis_funcs": [b1], "basis__basis2__n_basis_funcs": [b2_ns[0]]})
-
-# include all speed, exclude all position
-for b2 in b2_ns:
-    basis.basis2.n_basis_funcs = b2
-    basis.basis1.n_basis_funcs = b1_ns[0]
-    param_grid.append({"glm__feature_mask": [workshop_utils.create_feature_mask(basis, ["none", "all"], n_neurons=3)],
-                       "basis__basis1__n_basis_funcs": [b1_ns[0]], "basis__basis2__n_basis_funcs": [b2]})
-                       
-# exclude all of both
-for b1 in b1_ns:
-    for b2 in b2_ns:
-        basis.basis1.n_basis_funcs = b1
-        basis.basis2.n_basis_funcs = b2
-        param_grid.append({"glm__feature_mask": [workshop_utils.create_feature_mask(basis, "all", n_neurons=3)],
-                           "basis__basis1__n_basis_funcs": [b1], "basis__basis2__n_basis_funcs": [b2]})
+param_grid = workshop_utils.create_feature_mask_paramgrid(basis, [5, 10, 20], 
+                                                          [8, 16, 32], count.shape[1])
 ```
 
 <div class="render-user render-presenter">
 
 - Initialize and fit GridSearchCV
 </div>
-
 
 ```{code-cell} ipython3
 cv = model_selection.GridSearchCV(best_estim, param_grid, cv=cv_folds)
@@ -916,9 +820,9 @@ cv_df
 - For our own sanity, let's create an easier-to-read label:
 </div>
 
-
 ```{code-cell} ipython3
 :tags: [render-all]
+
 def label_feature_mask(x):
     mask = x.param_glm__feature_mask
     if mask.sum() / np.prod(mask.shape) == 1:
@@ -959,50 +863,17 @@ From the above plots, we can see that:
 - Number of basis functions for speed doesn't matter much.
 - We don't need many basis functions to represent the position.
 
+Let's visualize the predictions of the best estimator.
+
 <div class="render-user render-presenter">
 
-Just like before:
-- Use `predict` to check whether the predictions of our best estimator
-- Remember to convert the predicted firing rate to spikes per second!
-
-</div>
-
-<div class="render-user">
-
-```{code-cell} ipython3
-:tags: [skip-execution]
-# predict the model's firing rate -- using the best estimator!
-predicted_rate = 
-
-# recreate TsdFrame so we can rename columns
-predicted_rate = nap.TsdFrame(
-    t=predicted_rate.t,
-    d=predicted_rate.d,
-    columns=sorted(neurons),
-)
-
-# compute the position and speed tuning curves using the predicted firing rate.
-glm_pf = 
-glm_speed = 
-
-workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
-```
+- Visualize model predictions!
 
 </div>
 
 ```{code-cell} ipython3
-predicted_rate = cv.best_estimator_.predict(transformer_input) / bin_size
-# recreate so we can rename columns
-predicted_rate = nap.TsdFrame(
-    t=predicted_rate.t,
-    d=predicted_rate.d,
-    columns=sorted(neurons),
-)
-
-glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50)
-glm_speed = nap.compute_1d_tuning_curves_continuous(predicted_rate, speed, 30)
-
-workshop_utils.plot_position_speed_tuning(place_fields, tc_speed, neurons, glm_pf, glm_speed);
+:tags: [render-all]
+visualize_model_predictions(cv.best_estimator_, transformer_input)
 ```
 
 ## Conclusion
