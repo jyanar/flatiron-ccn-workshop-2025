@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-from .fetch import DOWNLOADABLE_FILES, fetch_data
-from .fetch import main as fetch_all
+from .fetch import DOWNLOADABLE_FILES, fetch_data, fetch_all
 from .plotting import *
 from .feature_mask import *
 

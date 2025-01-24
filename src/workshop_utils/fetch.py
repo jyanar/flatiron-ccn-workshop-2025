@@ -59,8 +59,7 @@ def fetch_data(dataset_name, path=None):
         return manager.fetch(dataset_name)
 
 
-@click.command()
-def main():
+def fetch_all():
     """Download data.
 
     By default, this will be in data directory in this repo. To overwrite, set
@@ -71,6 +70,22 @@ def main():
     """
     for f in DOWNLOADABLE_FILES:
         fetch_data(f)
+
+
+# need this seeming duplicate because a function wrapped in the click decorator will
+# kill the process when it finishes, and sometimes we want to call fetch_all from within
+# an existing python process
+@click.command()
+def main():
+    """fetch all data
+
+    By default, this will be in data directory in this repo. To overwrite, set
+    NEMOS_DATA_DIR environment variable, e.g.,
+
+    NEMOS_DATA_DIR=path/to/data_dir python fetch.py
+
+    """
+    fetch_all()
 
 
 if __name__ == "__main__":
