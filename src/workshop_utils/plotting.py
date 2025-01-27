@@ -505,32 +505,42 @@ def plot_position_speed(position: nap.Tsd, speed: nap.Tsd,
                         neuron_id: Union[int, List[int]]):
     if not hasattr(neuron_id, "__iter__"):
         neuron_id = [neuron_id]
-    fig = plt.figure(figsize=(6*len(neuron_id), 6))
+    fig = plt.figure(figsize=(6*len(neuron_id), 7))
     gs = plt.GridSpec(2, 2*len(neuron_id), wspace=.3, hspace=.35)
+    pos_range = (np.min([position.min(), position_tuning.index.min()]),
+                 np.max([position.max(), position_tuning.index.max()]))
+    speed_range = (np.min([speed.min(), speed_tuning.index.min()]),
+                   np.max([speed.max(), speed_tuning.index.max()]))
+    fr_range = (np.min([position_tuning.min(), speed_tuning.min()]),
+                np.max([position_tuning.max(), speed_tuning.max()]))
+
+    ax = fig.add_subplot(gs[0, 0])
+    bins, mean_speed, std_speed = _analyze_speed(speed, position)
+    ax.plot(bins, mean_speed)
+    ax.fill_between(
+        bins,
+        mean_speed - std_speed,
+        mean_speed + std_speed,
+        alpha=0.1,
+    )
+    ax.set(xlabel="Position (cm)", ylabel="Speed (cm/s)", title="Animal behavior",
+           xlim=pos_range, ylim=speed_range)
     for i, n in enumerate(neuron_id):
-        ax = fig.add_subplot(gs[0, 2*i])
+        ax = fig.add_subplot(gs[1, 2*i])
         ax.fill_between(position_tuning[n].index.values, np.zeros(len(position_tuning)),
                         position_tuning[n].values)
-        ax.set(xlabel="Position (cm)", ylabel="Firing rate (Hz)", title="Position tuning")
-        ax.text(1, 1.2, f"Neuron {n}", transform=ax.transAxes, size="x-large")
+        ax.set(xlabel="Position (cm)", ylabel="Firing rate (Hz)", title="Position tuning",
+               xlim=pos_range, ylim=fr_range)
+        ax.text(1.2, 1.1, f"Neuron {n}", transform=ax.transAxes, size="x-large",
+                ha="center")
 
-        ax = fig.add_subplot(gs[1, 2*i])
-        bins, mean_speed, std_speed = _analyze_speed(speed, position)
-
-        ax.plot(bins, mean_speed)
-        ax.fill_between(
-            bins,
-            mean_speed - std_speed,
-            mean_speed + std_speed,
-            alpha=0.1,
-        )
-        ax.set(xlabel="Position (cm)", ylabel="Speed (cm/s)", title="Animal speed")
         ax = fig.add_subplot(gs[1, 2*i+1])
         ax.fill_between(
             speed_tuning.index.values, np.zeros(len(speed_tuning)),
             speed_tuning[n].values
         )
-        ax.set(ylabel="Firing rate (Hz)", xlabel="Speed (cm/s)", title="Speed tuning")
+        ax.set(ylabel="Firing rate (Hz)", xlabel="Speed (cm/s)", title="Speed tuning",
+               xlim=speed_range, ylim=fr_range)
     return fig
 
 
