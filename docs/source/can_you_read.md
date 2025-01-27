@@ -11,15 +11,15 @@ kernelspec:
   name: python3
 ---
 
+# Are You Sitting Too Far?
+
 **Test if you are seated close enough:** 
 
 If you struggle reading any of the following text, consider sitting closer to the screen!
 
-# Can You Read This Header?
+## Can You Read This Header?
 
-## And This One Too?
-
-### Wow, And This As Well?
+### Wow, And This Too?
 
 ```{code-cell}
 
