@@ -8,7 +8,7 @@ sd_hide_title: true
 
 ## Setup
 
-Before the workshop, please try to complete the following steps. If you are unable to do so, we have an installation help session at the Flatiron Institute, 160 5th Ave, Room 418, from 2 to 5pm on Wednesday, January 29. Please come by!
+Before the workshop, please try to complete the following steps. If you are unable to do so, we have an installation help session at the Flatiron Institute, 160 5th Ave, in the 3rd floor conference center, from 2 to 5pm on Wednesday, January 29. Please come by!
 
 0. Make sure you have `git` installed. It is installed by default on most Mac and Linux machines, but you may need to install it if you are on Windows. [These instructions](https://github.com/git-guides/install-git) should help.
 1. Clone the github repo for this workshop:
