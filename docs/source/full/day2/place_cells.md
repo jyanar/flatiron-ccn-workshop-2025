@@ -215,6 +215,7 @@ for s, e in position.time_support.values:
     speed.append(speed_ep)
 
 speed = nap.Tsd(t=position.t, d=np.hstack(speed), time_support=position.time_support)
+print(speed.shape)
 ```
 
 Now that we have the speed of the animal, we can compute the tuning curves for speed modulation. Here we call pynapple [`compute_1d_tuning_curves`](https://pynapple.org/generated/pynapple.process.tuning_curves.html#pynapple.process.tuning_curves.compute_1d_tuning_curves):
@@ -264,7 +265,38 @@ These neurons all show both position and speed tuning, and we see that the anima
 (basis_eval_place_cells)=
 ### Basis evaluation
 
-As we've seen before, we will use basis objects to represent the input values. Since we have two different inputs, we'll need two separate basis objects. We will use [`MSplineEval`](nemos.basis.MSplineEval) for both, though with different numbers of basis functions:
+As we've seen before, we will use basis objects to represent the input values. Since we have two different inputs, we'll need two separate basis objects. In previous tutorials, we've used the `Conv` basis objects to represent the time-dependent effects we were looking to capture. Here, we're trying to capture the non-linear relationship between our input variables and firing rate, so we want the `Eval` objects. In these circumstances, you should look at the tuning you're trying to capture and compare to the [basis kernels (visualized in NeMoS docs)](https://nemos.readthedocs.io/en/latest/background/basis/README.html): you want your tuning to be capturable by a linear combination of them.
+
+In this case, several of these would probably work; we will use [`MSplineEval`](nemos.basis.MSplineEval) for both, though with different numbers of basis functions.
+
+:::{note}
+
+Later in this notebook, we'll show how to cross-validate across basis identity, which you can use to choose the basis.
+
+:::
+
+<div class="render-presenter">
+
+- why basis?
+   - without basis:
+     - either the GLM says that firing rate increases exponentially as position or speed increases, which is fairly nonsensical,
+     - or we have to fit the weight separately for each position or speed, which is really high-dim
+   - so, basis allows us to reduce dimensionality, capture non-linear modulation of firing rate (in this case, tuning)
+- why eval?
+    - basis objects have two modes:
+    - conv, like we've seen, for capturing time-dependent effects
+    - eval, for capturing non-linear modulation / tuning
+- why MSpline?
+    - when deciding on eval basis, look at the tuning you want to capture, compare to the kernels: you want your tuning to be capturable by a linear combination of these
+    - in cases like this, many possible basis objects we could use here and what I'll show you in a bit will allow you to determine which to use in principled manner
+    - MSpline, BSpline, RaisedCosineLinear : all would let you capture this
+    - weird choices:
+        - cyclic bspline, except maybe for position? if end and start are the same
+        - RaisedCosineLog (don't want the stretching)
+        - orthogonalized exponential (specialized for...)
+        - identity / history (too basic)
+</div>
+
 
 <div class="render-user render-presenter">
 
@@ -297,6 +329,7 @@ basis = position_basis + speed_basis
 
 - Create the design matrix!
 - Notice that, since we passed the basis pynapple objects, we got one back, preserving the time stamps.
+- `X` has the same number of time points as our input position and speed, but 25 columns. The columns come from  `n_basis_funcs` from each basis (10 for position, 15 for speed).
 
 </div>
 
@@ -358,6 +391,9 @@ Let's check first if our model can accurately predict the tuning curves we displ
 # predict the model's firing rate
 predicted_rate = 
 
+# same shape as the counts we were trying to predict
+print(predicted_rate.shape, count.shape)
+
 # compute the position and speed tuning curves using the predicted firing rate.
 glm_pf = 
 glm_speed = 
@@ -368,6 +404,9 @@ glm_speed =
 ```{code-cell} ipython3
 # predict the model's firing rate
 predicted_rate = glm.predict(X) / bin_size
+
+# same shape as the counts we were trying to predict
+print(predicted_rate.shape, count.shape)
 
 # compute the position and speed tuning curves using the predicted firing rate.
 glm_pf = nap.compute_1d_tuning_curves_continuous(predicted_rate, position, 50, position.time_support)
@@ -666,7 +705,7 @@ param_grid = {
     "basis__basis1__n_basis_funcs": [5, 10, 20],
     "basis__basis2": [nmo.basis.MSplineEval(15).set_input_shape(1),
                       nmo.basis.BSplineEval(15).set_input_shape(1),
-                      nmo.basis.CyclicBSplineEval(15).set_input_shape(1)],
+                      nmo.basis.RaisedCosineLinearEval(15).set_input_shape(1)],
 }
 ```
 
@@ -732,11 +771,13 @@ Now, finally, we understand almost enough about how scikit-learn works to do fea
 
 - Now one more thing we can do with scikit-learn!
 - Each `PopulationGLM` object has a feature mask, which allows us to exclude certain parts of the input
+- Feature mask shape: `X.shape[1]` (number of columns in the design matrix) by `n_neurons` (number of neurons we're trying to predict)
 - (By default, everything is included.)
 </div>
 
 ```{code-cell} ipython3
 pipe['glm'].feature_mask
+print(pipe['glm'].feature_mask.shape)
 ```
 
 ```{code-cell} ipython3
