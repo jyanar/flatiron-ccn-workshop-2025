@@ -6,9 +6,25 @@ sd_hide_title: true
 
 # CCN Software Workshop, Jan 2025
 
+We are excited to see everyone at the Flatiron Center for Computational Neuroscience workshop on using open source packages to analyze and visualize neural data! You should have received an email with logistical information, including the schedule and link to the slack channel where we will be communicating the workshop. If you did not receive this email, please let us know!
+
+Over the course of this two-day workshop, we will walk you through the notebooks included on this site in order to demonstrate how to use pynapple and NeMoS to analyze and visualize your data.
+
+Before the workshop, please try to follow the [setup](#setup) instructions below to install everything on your personal laptop.
+
+The presentations and schedule for this workshop can be found at [this page](https://neurorse.flatironinstitute.org/workshops/jan-2025.html).
+
+## This website
+
+This website contains rendered versions of the notebooks we will be working through during this workshop. During the workshop, attendees should look at the versions found under the `For users` section. These notebooks have some code pre-filled, as well as brief notes to help orient you. If you follow the setup instructions below, you will have editable copies of these notebooks on your laptop, and you are expected to follow along using these notebooks.
+
+If you miss something or fall behind, you can look into the `For presenters` section, which includes the completed code blocks (along with some notes), so you can catch up.
+
+After the workshop, we encourage you to return and check out the `Full notebooks` section, which, as the name implies, includes everything: explanatory text, code, and plots.
+
 ## Setup
 
-Before the workshop, please try to complete the following steps. If you are unable to do so, we have an installation help session at the Flatiron Institute, 160 5th Ave, Room 418, from 2 to 5pm on Wednesday, January 29. Please come by!
+Before the workshop, please try to complete the following steps. If you are unable to do so, we have an installation help session at the Flatiron Institute, 160 5th Ave, in the 3rd floor conference center, from 2 to 5pm on Wednesday, January 29. Please come by!
 
 0. Make sure you have `git` installed. It is installed by default on most Mac and Linux machines, but you may need to install it if you are on Windows. [These instructions](https://github.com/git-guides/install-git) should help.
 1. Clone the github repo for this workshop:
@@ -237,9 +253,9 @@ jupyter lab
 
 A binder instance (a virtual environment running on Flatiron's cluster) is provided in case we cannot get your installation working. To access it, click the "launch binder" button in the top left of this site or click [here](https://binder.flatironinstitute.org/v2/user/wbroderick/jan2025?labpath=notebooks).
 
+You must login with the email address you provided when registering for the workshop. If you get a `403 Forbidden` error or would like to use a different email, send Billy Broderick a message on the workshop slack.
+
 Some usage notes:
-history
-- You must login with the email address you provided when registering for the workshop. If you need to use a different email, find Billy and give him the new email address.
 - You are only allowed to have a single binder instance running at a time, so if you get the "already have an instance running error", go to the [binderhub page](https://binder.flatironinstitute.org/hub/hub/home) (or click on "check your currently running servers" on the right of the page) to join your running instance.
 - If you lose connection halfway through the workshop, go to the [binderhub page](https://binder.flatironinstitute.org/hub/hub/home) to join your running instance rather than restarting the image.
 - This is important because if you restart the image, **you will lose all data and progress**.

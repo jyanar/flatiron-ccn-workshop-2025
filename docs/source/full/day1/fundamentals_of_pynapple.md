@@ -449,7 +449,7 @@ print(tsgroup.getby_threshold("rate", 1, "<"))
 print(ep[ep.direction=='left'])
 ```
 
-#### Special case of slicing : `TsdFrame`
+### Special case of slicing : `TsdFrame`
 
 ```{code-cell} ipython
 :tags: [render-all]

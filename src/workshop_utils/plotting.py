@@ -12,7 +12,8 @@ from nemos import _documentation_utils as doc_plots
 
 __all__ = ["plot_features", "animate_1d_convolution", "plot_head_direction_tuning_model", "plot_feature_mask",
            "plot_heatmap_cv_results", "plot_position_speed",
-           "plot_position_speed_tuning", "plot_place_fields", "plot_pos_speed_bases", "visualize_intervals"]
+           "plot_position_speed_tuning", "plot_place_fields", "plot_pos_speed_bases", "visualize_intervals",
+           "plot_current_history_features", "current_injection_plot"]
 
 def plot_features(
     input_feature: Union[nap.Tsd, nap.TsdFrame, nap.TsdTensor, NDArray],
@@ -505,32 +506,42 @@ def plot_position_speed(position: nap.Tsd, speed: nap.Tsd,
                         neuron_id: Union[int, List[int]]):
     if not hasattr(neuron_id, "__iter__"):
         neuron_id = [neuron_id]
-    fig = plt.figure(figsize=(6*len(neuron_id), 6))
+    fig = plt.figure(figsize=(6*len(neuron_id), 7))
     gs = plt.GridSpec(2, 2*len(neuron_id), wspace=.3, hspace=.35)
+    pos_range = (np.min([position.min(), position_tuning.index.min()]),
+                 np.max([position.max(), position_tuning.index.max()]))
+    speed_range = (np.min([speed.min(), speed_tuning.index.min()]),
+                   np.max([speed.max(), speed_tuning.index.max()]))
+    fr_range = (np.min([position_tuning.min(), speed_tuning.min()]),
+                np.max([position_tuning.max(), speed_tuning.max()]))
+
+    ax = fig.add_subplot(gs[0, 0])
+    bins, mean_speed, std_speed = _analyze_speed(speed, position)
+    ax.plot(bins, mean_speed)
+    ax.fill_between(
+        bins,
+        mean_speed - std_speed,
+        mean_speed + std_speed,
+        alpha=0.1,
+    )
+    ax.set(xlabel="Position (cm)", ylabel="Speed (cm/s)", title="Animal behavior",
+           xlim=pos_range, ylim=speed_range)
     for i, n in enumerate(neuron_id):
-        ax = fig.add_subplot(gs[0, 2*i])
+        ax = fig.add_subplot(gs[1, 2*i])
         ax.fill_between(position_tuning[n].index.values, np.zeros(len(position_tuning)),
                         position_tuning[n].values)
-        ax.set(xlabel="Position (cm)", ylabel="Firing rate (Hz)", title="Position tuning")
-        ax.text(1, 1.2, f"Neuron {n}", transform=ax.transAxes, size="x-large")
+        ax.set(xlabel="Position (cm)", ylabel="Firing rate (Hz)", title="Position tuning",
+               xlim=pos_range, ylim=fr_range)
+        ax.text(1.2, 1.1, f"Neuron {n}", transform=ax.transAxes, size="x-large",
+                ha="center")
 
-        ax = fig.add_subplot(gs[1, 2*i])
-        bins, mean_speed, std_speed = _analyze_speed(speed, position)
-
-        ax.plot(bins, mean_speed)
-        ax.fill_between(
-            bins,
-            mean_speed - std_speed,
-            mean_speed + std_speed,
-            alpha=0.1,
-        )
-        ax.set(xlabel="Position (cm)", ylabel="Speed (cm/s)", title="Animal speed")
         ax = fig.add_subplot(gs[1, 2*i+1])
         ax.fill_between(
             speed_tuning.index.values, np.zeros(len(speed_tuning)),
             speed_tuning[n].values
         )
-        ax.set(ylabel="Firing rate (Hz)", xlabel="Speed (cm/s)", title="Speed tuning")
+        ax.set(ylabel="Firing rate (Hz)", xlabel="Speed (cm/s)", title="Speed tuning",
+               xlim=speed_range, ylim=fr_range)
     return fig
 
 
@@ -599,3 +610,95 @@ def visualize_intervals(eps):
     plt.xlabel("Time (s)")
     plt.ylabel("Epochs")    
 
+def plot_current_history_features(current, features, basis, window_duration_sec,
+                                  interval=nap.IntervalSet(462.77, 463)):
+    fig, axes = plt.subplots(2, 3, sharey='row',  figsize=(8, 3.5))
+    time, basis = basis.evaluate_on_grid(basis.window_size)
+    time *= window_duration_sec
+    current = current.restrict(interval)
+    features = features.restrict(interval) / features.restrict(interval).max(0) * current.max()
+    for ax in axes[1, :]:
+        ax.plot(current, 'k--')
+        ax.set_xlabel("Time (sec")
+    axes[0, 0].plot(time, basis, alpha=.1)
+    axes[0, 0].plot(time, basis[:, 0], 'C0', alpha=1)
+    axes[0, 0].set_ylabel("Amplitude (A.U.)")
+    axes[1, 0].plot(features[:,0])
+    axes[1, 0].set_ylabel("Current")
+    axes[0, 0].set_title("Feature 1")
+    axes[1, 1].plot(features[:, -1], f'C{basis.shape[1]-1}')
+    axes[0, 1].plot(time, basis, alpha=.1)
+    axes[0, 1].plot(time, basis[:, -1], f'C{basis.shape[1]-1}', alpha=1)
+    axes[0, 1].set_title(f"Feature {basis.shape[1]}")
+    axes[0, 2].plot(time, basis)
+    axes[1, 2].plot(features)
+    axes[0, 2].set_title("All features")
+
+def current_injection_plot(current: nap.Tsd, spikes: nap.TsGroup,
+                           firing_rate: nap.TsdFrame,
+                           *predicted_firing_rates: Optional[nap.TsdFrame]):
+    ex_intervals = current.threshold(0.0).time_support
+
+    # define plotting parameters
+    # colormap, color levels and transparency level
+    # for the current injection epochs
+    cmap = plt.get_cmap("autumn")
+    color_levs = [0.8, 0.5, 0.2]
+    alpha = 0.4
+
+    fig = plt.figure(figsize=(7, 7))
+    # first row subplot: current
+    ax = plt.subplot2grid((4, 3), loc=(0, 0), rowspan=1, colspan=3, fig=fig)
+    ax.plot(current, color="grey")
+    ax.set_ylabel("Current (pA)")
+    ax.set_title("Injected Current")
+    ax.set_xticklabels([])
+    ax.axvspan(ex_intervals.loc[0,"start"], ex_intervals.loc[0,"end"], alpha=alpha, color=cmap(color_levs[0]))
+    ax.axvspan(ex_intervals.loc[1,"start"], ex_intervals.loc[1,"end"], alpha=alpha, color=cmap(color_levs[1]))
+    ax.axvspan(ex_intervals.loc[2,"start"], ex_intervals.loc[2,"end"], alpha=alpha, color=cmap(color_levs[2]))
+
+    # second row subplot: response
+    resp_ax = plt.subplot2grid((4, 3), loc=(1, 0), rowspan=1, colspan=3, fig=fig)
+    resp_ax.plot(firing_rate, color="k", label="Observed firing rate")
+    if predicted_firing_rates:
+        if len(predicted_firing_rates) > 1:
+            lbls = [' (current history)', ' (instantaneous only)']
+        else:
+            lbls = ['']
+        for pred_fr, style, lbl in zip(predicted_firing_rates, ['-', '--'], lbls):
+            resp_ax.plot(pred_fr, linestyle=style, color="tomato", label=f'Predicted firing rate{lbl}')
+    resp_ax.plot(spikes.to_tsd([-1.5]), "|", color="k", ms=10, label="Observed spikes")
+    resp_ax.set_ylabel("Firing rate (Hz)")
+    resp_ax.set_xlabel("Time (s)")
+    resp_ax.set_title("Neural response", y=.95)
+    resp_ax.axvspan(ex_intervals.loc[0,"start"], ex_intervals.loc[0,"end"], alpha=alpha, color=cmap(color_levs[0]))
+    resp_ax.axvspan(ex_intervals.loc[1,"start"], ex_intervals.loc[1,"end"], alpha=alpha, color=cmap(color_levs[1]))
+    resp_ax.axvspan(ex_intervals.loc[2,"start"], ex_intervals.loc[2,"end"], alpha=alpha, color=cmap(color_levs[2]))
+    ylim = resp_ax.get_ylim()
+
+    # third subplot: zoomed responses
+    zoom_axes = []
+    for i in range(len(ex_intervals)):
+        interval = ex_intervals.loc[[i]]
+        ax = plt.subplot2grid((4, 3), loc=(2, i), rowspan=1, colspan=1, fig=fig)
+        ax.plot(firing_rate.restrict(interval), color="k")
+        ax.plot(spikes.restrict(interval).to_tsd([-1.5]), "|", color="k", ms=10)
+        if predicted_firing_rates:
+            for pred_fr, style in zip(predicted_firing_rates, ['-', '--']):
+                ax.plot(pred_fr.restrict(interval), linestyle=style,
+                        color="tomato")
+        else:
+            ax.set_ylim(ylim)
+        if i == 0:
+            ax.set_ylabel("Firing rate (Hz)")
+        ax.set_xlabel("Time (s)")
+        for spine in ["left", "right", "top", "bottom"]:
+            color = cmap(color_levs[i])
+            # add transparency
+            ax.spines[spine].set_visible(True)
+            ax.spines[spine].set_color(color)
+            ax.spines[spine].set_linewidth(2)
+        zoom_axes.append(ax)
+
+    resp_ax.legend(loc='upper center', bbox_to_anchor=(.5, -.4),
+                   bbox_transform=zoom_axes[1].transAxes)

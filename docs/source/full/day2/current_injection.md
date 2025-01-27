@@ -783,11 +783,342 @@ Viewing this plot also makes it clear that the model's tuning curve is
 approximately exponential. We already knew that! That's what it means to be a
 LNP model of a single input. But it's nice to see it made explicit.
 
+### Extending the model to use injection history
+
+We can try extending the model in order to improve its performance. There are many
+ways one can do this: the iterative refinement and improvement of your model is an
+important part of the scientific process! In this tutorial, we'll discuss one such
+extension, but you're encouraged to try others.
+
+Our model right now assumes that the neuron's spiking behavior is only driven by the
+*instantaneous input current*. That is, we're saying that history doesn't matter. But
+we know that neurons integrate information over time, so why don't we add extend our
+model to reflect that?
+
+To do so, we will change our predictors, including variables that represent the
+history of the input current as additional columns. First, we must decide the duration
+of time that we think is relevant: does current passed to the cell 10 msec ago matter?
+what about 100 msec? 1 sec? To start, we should use our a priori knowledge about the
+system to determine a reasonable initial value. Later, we can examine the model
+parameters and do formal model comparison in order to determine how much history is
+necessary.
+
+For now, let's use a duration of 200 msec:
+
+<div class="render-user render-presenter">
+  - choose a length of time over which the neuron integrates the input current
+</div>
+
+
+```{code-cell} ipython3
+current_history_duration_sec = .2
+# convert this from sec to bins
+current_history_duration = int(current_history_duration_sec / bin_size)
+```
+
+To construct our new predictors, we could simply take the current and shift it
+incrementally. The value of predictor `binned_current` at time $t$ is the injected
+current at time $t$; by shifting `binned_current` backwards by 1, we are modeling the
+effect of the current at time $t-1$ on the firing rate at time $t$, and so on for all
+shifts $i$ up to `current_history_duration`:
+
+
+```{code-cell} ipython3
+binned_current[1:]
+binned_current[2:]
+# etc
+```
+
+In general, however, this is not a good way to extend the model in the way discussed.
+You will end end up with a very large number of predictive variables (one for every
+bin shift!), which will make the model more sensitive to noise in the data.
+
+A better idea is to do some dimensionality reduction on these predictors, by
+parametrizing them using **basis functions**. These will allow us to capture
+interesting non-linear effects with a relatively low-dimensional parametrization that
+preserves convexity. NeMoS has a whole library of basis objects available at
+`nmo.basis`, and choosing which set of basis functions and their parameters, like
+choosing the duration of the current history predictor, requires knowledge of your
+problem, but can later be examined using model comparison tools.
+
+For history-type inputs like we're discussing, the raised cosine log-stretched basis
+first described in Pillow et al., 2005 [^pillow] is a good fit. This basis set has the nice
+property that their precision drops linearly with distance from event, which is a
+makes sense for many history-related inputs in neuroscience: whether an input happened
+1 or 5 msec ago matters a lot, whereas whether an input happened 51 or 55 msec ago is
+less important.
+
+
+```{code-cell} ipython3
+:tags: [render-all]
+doc_plots.plot_basis();
+```
+
+[^3]: Pillow, J. W., Paninski, L., Uzzel, V. J., Simoncelli, E. P., & J.,
+C. E. (2005). Prediction and decoding of retinal ganglion cell responses
+with a probabilistic spiking model. Journal of Neuroscience, 25(47),
+11003–11013. http://dx.doi.org/10.1523/jneurosci.3305-05.2005
+
+NeMoS's `Basis` objects handle the construction and use of these basis functions. When
+we instantiate this object, the main argument we need to specify is the number of
+functions we want: with more basis functions, we'll be able to represent the effect of
+the corresponding input with the higher precision, at the cost of adding additional
+parameters.
+
+We also need to specify whether we want to use the basis in convolutional (`"conv"`)
+or evaluation (`"eval"`) mode. This is determined by the type of feature we wish to
+represent with the basis:
+
+- Evaluation mode transforms the input through the non-linear function defined by the
+  basis. This can be used to represent features such as spatial location and head
+  direction.
+
+- Convolution mode applies a convolution of the input data to the bank of filters
+  defined by the basis, and is particularly useful when analyzing data with inherent
+  temporal dependencies, such as spike history or the history of input current in this
+  example. In convolution mode, we must additionally specify the `window_size`, the
+  length of the filters in bins.
+
+<div class="render-user render-presenter">
+  - define a basis object
+</div>
+
+
+```{code-cell} ipython3
+basis = nmo.basis.RaisedCosineLogConv(
+    n_basis_funcs=10, window_size=current_history_duration,
+)
+```
+
+:::{admonition} Visualizing `Basis` objects
+:class: tip
+
+NeMoS provides some convenience functions for quickly visualizing the basis, in
+order to create plots like the type seen above.
+
+```python
+# basis_kernels is an array of shape (current_history_duration, n_basis_funcs)
+# while time is an array of shape (current_history_duration, )
+time, basis_kernels = basis.evaluate_on_grid(current_history_duration)
+# convert time to sec
+time *= current_history_duration_sec
+plt.plot(time, basis_kernels)
+```
+
+:::
+
+With this basis in hand, we can compress our input features:
+
+<div class="render-user render-presenter">
+  - create the design matrix
+  - examine the features it contains
+</div>
+
+
+```{code-cell} ipython3
+# under the hood, this convolves the input with the filter bank visualized above
+current_history = basis.compute_features(binned_current)
+print(current_history)
+```
+
+We can see that our design matrix is now 28020 time points by 10 features, one for
+each of our basis functions. If we had used the raw shifted data as the features, like
+we started to do above, we'd have a design matrix with 200 features, so we've ended up
+with more than an order of magnitude fewer features!
+
+Note that we have a bunch of NaNs at the beginning of each column. That's because of
+boundary handling: we're using the input of the past 200 msecs to predict the firing
+rate at time $t$, so what do we do in the first 200 msecs? The safest way is to ignore
+them, so that the model doesn't consider them during the fitting procedure.
+
+What do these features look like?
+
+
+```{code-cell} ipython3
+:tags: [render-all]
+
+# in this plot, we're normalizing the amplitudes to make the comparison easier --
+# the amplitude of these features will be fit by the model, so their un-scaled
+# amplitudes is not informative
+workshop_utils.plot_current_history_features(binned_current, current_history, basis,
+                                             current_history_duration_sec)
+```
+
+On the top row, we're visualizing the basis functions, as above. On the bottom row,
+we're showing the input current, as a black dashed line, and corresponding features
+over a small window of time, just as the current is being turned on. These features
+are the result of a convolution between the basis function on the top row with the
+black dashed line shown below. As the basis functions get progressively wider and
+delayed from the event start, we can thus think of the features as weighted averages
+that get progressively later and smoother. Let's step through that a bit more slowly.
+
+In the leftmost plot, we can see that the first feature almost perfectly tracks the
+input. Looking at the basis function above, that makes sense: this function's max is
+at 0 and quickly decays. This feature is thus a very slightly smoothed version of the
+instantaneous current feature we were using before. In the middle plot, we can see
+that the last feature has a fairly long lag compared to the current, and is a good
+deal smoother. Looking at the rightmost plot, we can see that the other features vary
+between these two extremes, getting smoother and more delayed.
+
+These are the elements of our feature matrix: representations of not just the
+instantaneous current, but also the current history, with precision decreasing as the
+lag between the predictor and current increases. Let's see what this looks like when
+we go to fit the model!
+
+We'll initialize and create the GLM object in the same way as before, only changing
+the design matrix we pass to the model:
+
+<div class="render-user render-presenter">
+  - create and fit the GLM
+  - examine the parameters
+</div>
+
+
+```{code-cell} ipython3
+history_model = nmo.glm.GLM(solver_name="LBFGS")
+history_model.fit(current_history, count)
+```
+
+As before, we can examine our parameters, `coef_` and `intercept_`:
+
+
+```{code-cell} ipython3
+:tags: [render-all]
+
+print(f"firing_rate(t) = exp({history_model.coef_} * current(t) + {history_model.intercept_})")
+```
+
+Notice the shape of these parameters:
+
+
+```{code-cell} ipython3
+print(history_model.coef_.shape)
+print(history_model.intercept_.shape)
+```
+
+`coef_` has 10 values now, while `intercept_` still has one &mdash; why is that?
+Because we now have 10 features, but still only 1 neuron whose firing rate we're
+predicting.
+
+Let's re-examine our predicted firing rate and see how the new model does:
+
+<div class="render-user render-presenter">
+  - compare the predicted firing rate to the data and the old model
+  - what do we see?
+</div>
+
+
+```{code-cell} ipython3
+:tags: [render-all]
+
+# all this code is the same as above
+history_pred_fr = history_model.predict(current_history)
+history_pred_fr = history_pred_fr / bin_size
+smooth_history_pred_fr = history_pred_fr.dropna().smooth(.05, size_factor=20)
+workshop_utils.current_injection_plot(current, spikes, firing_rate,
+                                      # compare against the old firing rate
+                                      smooth_history_pred_fr, smooth_predicted_fr)
+```
+
+We can see that there are only some small changes here. Our new model maintains the
+two successes of the old one: firing rate increases with injected current and shows
+the observed periodicity. Our model has not improved the match between the firing rate
+in the first or second intervals, but it seems to do a better job of capturing the
+onset transience, especially in the third interval.
+
+We can similarly examine our mean firing rate:
+
+<div class="render-user render-presenter">
+  - examine the predicted average firing rate and tuning curve
+  - what do we see?
+</div>
+
+
+```{code-cell} ipython3
+# compare observed mean firing rate with the history_model predicted one
+print(f"Observed mean firing rate: {np.mean(count) / bin_size} Hz")
+print(f"Predicted mean firing rate (instantaneous current): {np.nanmean(predicted_fr)} Hz")
+print(f"Predicted mean firing rate (current history): {np.nanmean(smooth_history_pred_fr)} Hz")
+```
+
+And our tuning curves:
+
+```{code-cell} ipython3
+:tags: [render-all]
+
+# Visualize tuning curve
+tuning_curve_history_model = nap.compute_1d_tuning_curves_continuous(smooth_history_pred_fr, current, 15)
+fig = doc_plots.tuning_curve_plot(tuning_curve)
+fig.axes[0].plot(tuning_curve_history_model, color="tomato", label="glm (current history)")
+fig.axes[0].plot(tuning_curve_model, color="tomato", linestyle='--', label="glm (instantaneous current)")
+fig.axes[0].legend()
+```
+
+This new model is actually doing a worse job matching the mean firing rate. Looking at
+the tuning curve, it looks like this model does predict response saturation, at about
+the right level, and it seems to do a better job at the lower current levels , though
+its maximum firing is far too low.
+
+Comparing the two models by examining their predictions is important, but you may also
+want a number with which to evaluate and compare your models' performance. As
+discussed earlier, the GLM optimizes log-likelihood to find the best-fitting
+weights, and we can calculate this number using its `score` method:
+
+<div class="render-user render-presenter">
+  - use log-likelihood to compare models
+</div>
+
+
+```{code-cell} ipython3
+log_likelihood = model.score(predictor, count, score_type="log-likelihood")
+print(f"log-likelihood (instantaneous current): {log_likelihood}")
+log_likelihood = history_model.score(current_history, count, score_type="log-likelihood")
+print(f"log-likelihood (current history): {log_likelihood}")
+```
+
+This log-likelihood is un-normalized and thus doesn't mean that much by
+itself, other than "higher=better". When comparing alternative GLMs fit on
+the same dataset, whether that's models using different regularizers and
+solvers or those using different predictors, comparing log-likelihoods is a
+reasonable thing to do.
+
+:::{note}
+
+Under the hood, NeMoS is minimizing the negative log-likelihood, as is
+typical in many optimization contexts. `score` returns the real
+log-likelihood, however, and thus higher is better.
+
+:::
+
+Thus, we can see that, judging by the log-likelihood, the addition of the current
+history to the model does slightly improve it. However, notice that we increased our
+number of parameters tenfold, and only found a small improvement in performance.
+Increasing the number of parameters makes you more susceptible to overfitting &mdash;
+is this tradeoff worth it? To properly answer this question, one should split the
+dataset into test and train sets, training the model on one subset of the data and
+testing it on another to test the model's generalizability. We'll see a simple version
+of this in the next exercise, and a more streamlined version, using `scikit-learn`'s
+pipelining and cross-validation machinery, will be presented in an advanced exercise.
+
 ### Finishing up
 
-There are a handful of other operations you might like to do with the GLM.
-First, you might be wondering how to simulate spikes &mdash; the GLM is a LNP
-model, but the firing rate is just the output of *LN*, its first two steps.
+Note that, because the log-likelihood is un-normalized, it should not be compared
+across datasets (because e.g., it won't account for difference in noise levels). We
+provide the ability to compute the pseudo-$R^2$ for this purpose:
+
+<div class="render-user render-presenter">
+  - what if you want to compare models across datasets?
+</div>
+
+```{code-cell} ipython3
+r2 = model.score(predictor, count, score_type='pseudo-r2-Cohen')
+print(f"pseudo-r2 (instantaneous current): {r2}")
+r2 = history_model.score(current_history, count, score_type='pseudo-r2-Cohen')
+print(f"pseudo-r2 (current history): {r2}")
+```
+
+Additionally, you might be wondering how to simulate spikes &mdash; the GLM is a
+LNP model, but the firing rate is just the output of *LN*, its first two steps.
 The firing rate is just the mean of a Poisson process, so we can pass it to
 `jax.random.poisson`:
 
@@ -805,45 +1136,11 @@ recommended that you focus on firing rates when interpreting your model.
 Also, while including spike history is often helpful, it can sometimes make
 simulating spikes like this unstable: if your GLM includes auto-regressive
 inputs (e.g., neurons are connected to themselves or each other), simulations
-can sometimes can behave poorly because of runaway excitation [$^{[1,
-2]}$](#ref-1).
+can sometimes can behave poorly because of runaway excitation [^arribas] [^hocker].
 
-Finally, you may want a number with which to evaluate your model's
-performance. As discussed earlier, the model optimizes log-likelihood to find
-the best-fitting weights, and we can calculate this number using its [`score`](nemos.glm.GLM.score)
-method:
+[^arribas]: Arribas, Diego, Yuan Zhao, and Il Memming Park. "Rescuing neural spike train models from bad MLE." Advances in Neural Information Processing Systems 33 (2020): 2293-2303. https://arxiv.org/abs/2010.12362
 
-<div class="render-user render-presenter">
-- how to quantify model performance?
-</div>
-
-
-```{code-cell} ipython3
-log_likelihood = model.score(predictor, count, score_type="log-likelihood")
-print(f"log-likelihood: {log_likelihood}")
-```
-
-This log-likelihood is un-normalized and thus doesn't mean that much by
-itself, other than "higher=better". When comparing alternative GLMs fit on
-the same dataset, whether that's models using different regularizers and
-solvers or those using different predictors, comparing log-likelihoods is a
-reasonable thing to do.
-
-:::{note}
-
-Under the hood, NeMoS is minimizing the negative log-likelihood, as is
-typical in many optimization contexts. [`score`](nemos.glm.GLM.score) returns the real
-log-likelihood, however, and thus higher is better.
-:::
-
-Because it's un-normalized, however, the log-likelihood should not be
-compared across datasets (because e.g., it won't account for difference in
-noise levels). We provide the ability to compute the pseudo-$R^2$ for this
-purpose:
-
-```{code-cell} ipython3
-model.score(predictor, count, score_type='pseudo-r2-Cohen')
-```
+[^hocker]: Hocker, David, and Memming Park. "Multistep inference for generalized linear spiking models curbs runaway excitation." International IEEE/EMBS Conference on Neural Engineering, May 2017. https://ieeexplore.ieee.org/document/8008426
 
 ## Further Exercises 
 
@@ -878,31 +1175,21 @@ predicted firing rate and smoothed spike train. How would we do that?
 
 We could try adding the following inputs to the model, alone or together:
 
+- Tinkering with the current history: we tried adding the current history to the
+  model, but we only investigated one set of choices with the basis functions. What if
+  we tried changing the duration of time we considered
+  (`current_history_duration_sec`)? Different numbers of basis functions? A different
+  choice for the `Basis` object altogether? What effects would these have on our model?
+
 - Spiking history: we know neurons have a refactory period (they are unable to spike a
   second time immediately after spiking), so maybe making the model aware of whether
   the neuron spiked recently could help better capture the onset transience.
 
-- Current history: the model's input here is the current at the same moment
-  as the spike, but that information is probably integrated over time. Maybe
-  we can add additional time points.
-
-- More complicated tuning curve: as we saw with the tuning curve plots, this model
-  model implicitly assumes that the relationship between current and firing
-  rate is exponential, which is close but not quite right. Maybe we can
-  improve that.
-
-The proper way to add these in nemos makes use of `Basis` objects, which
-we'll explore more in later tutorials. You can try the adding the spiking or
-current history inputs without them (though the model won't do as well), or
-return to this example after you've learned about `Basis` objects and how to
-use them.
-
-
-## References
-
-[1] <span id="ref-1"><a href="https://arxiv.org/abs/2010.12362">Arribas, Diego, Yuan Zhao, and Il Memming Park. "Rescuing neural spike train models from bad MLE." Advances in Neural Information Processing Systems 33 (2020): 2293-2303.</a></span>
-
-[2] <a href="https://ieeexplore.ieee.org/document/8008426">Hocker, David, and Memming Park. "Multistep inference for generalized linear spiking models curbs runaway excitation." International IEEE/EMBS Conference on Neural Engineering, May 2017.</a>
+- More complicated tuning curve: as we saw with the tuning curve plots, neither model
+  explored here quite accurately captures the relationship between the current and the
+  firing rate. Can we improve that somehow? We saw that adding the current history
+  changed this relationship, but we can also change it without including the history
+  by using a basis object in `"eval"` mode.
 
 <div class="render-all">
 
