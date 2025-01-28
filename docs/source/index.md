@@ -262,12 +262,6 @@ Some usage notes:
 - The binder will be shutdown automatically after 1 day of inactivity or 7 days of total usage. Data will not persist after the binder instance shuts down, so **please download any notebooks** you want to keep.
 - I will destroy this instance in 2 weeks. You can download your notebooks to keep them after the fact.
 
-
-```{toctree}
-:titlesonly:
-can_you_read
-```
-
 ```{toctree}
 :glob:
 :caption: Full notebooks
