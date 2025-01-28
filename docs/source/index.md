@@ -226,7 +226,7 @@ jupyter lab
 
   (On Windows, replace `$(realpath ..)` with the path to the `ccn-software-jan-2025` directory.)
 - We have noticed jupyter notebooks behaving a bit odd in Safari --- if you are running/editing jupyter in Safari and the behavior seems off (scrolling not smooth, lag between creation and display of cells), try a different browser. We've had better luck with Firefox or using the arrow keys to navigate between cells.
-- On **Windows + conda**: if after installing conda, the path are not set correctly, you may encounter this error message: 
+- On **Windows + conda**: if after installing conda the path are not correctly set, you may encounter this error message: 
    ```
    conda : The term 'conda' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
    ```
