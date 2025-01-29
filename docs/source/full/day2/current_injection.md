@@ -65,7 +65,9 @@ Data for this notebook is a patch clamp experiment with a mouse V1 neuron, from 
 </div>
 
 <div class="render-all">
+
 ![Allen Brain Atlas view of the data we will analyze.](../../_static/allen_data.png)
+
 </div>
 
 In the figure above (from the Allen Brain Atlas website), we see the
@@ -154,7 +156,7 @@ Now that we've downloaded the data, let's open it with pynapple and examine
 its contents.
 
 <div class="render-user render-presenter">
-- Open the NWB file with [pynapple](https://pynapple-org.github.io/pynapple/)
+- Open the NWB file with [pynapple](https://pynapple.org)
 </div>
 
 ```{code-cell} ipython3
@@ -168,6 +170,7 @@ explore throughout this demo. The following illustrates how these fields relate 
 we visualized above:
 
 <div class="render-all">
+
 ![Annotated view of the data we will analyze.](../../_static/allen_data_annotated.gif)
 <!-- this gif created with the following imagemagick command: convert -layers OptimizePlus -delay 100 allen_data_annotated-units.svg allen_data_annotated-epochs.svg allen_data_annotated-stimulus.svg allen_data_annotated-response.svg -loop 0 allen_data_annotated.gif -->
 
@@ -458,7 +461,7 @@ firing rate within those bins:
 
 <div class="render-user render-presenter">"
 What is the relationship between the current and the spiking activity?
-[`compute_1d_tuning_curves`](https://pynapple-org.github.io/pynapple/reference/process/tuning_curves/#pynapple.process.tuning_curves.compute_1d_tuning_curves) : compute the firing rate as a function of a 1-dimensional feature.
+[`compute_1d_tuning_curves`](https://pynapple.org/generated/pynapple.process.tuning_curves.html#pynapple.process.tuning_curves.compute_1d_tuning_curves) : compute the firing rate as a function of a 1-dimensional feature.
 </div>
 
 ```{code-cell} ipython3
@@ -499,8 +502,8 @@ explain:
 Now that we understand our data, we're almost ready to put the model together.
 Before we construct it, however, we need to get the data into the right format.
 
-NeMoS requires that the predictors and spike counts it operates on have the
-following properties:
+When fitting a single neuron, NeMoS requires that the predictors and spike
+counts it operates on have the following properties:
 
 - predictors and spike counts must have the same number of time points.
 
@@ -585,9 +588,9 @@ expects a 2d input, with neurons concatenated along the second dimension. (NeMoS
 provides some helper functions for splitting the design matrix and model
 parameter arrays to make them more interpretable.)
 
-Note that fitting each neuron separately is equivalent to fitting the entire
-population at once. Fitting them separately can make your life easier by e.g.,
-allowing you to parallelize more easily.
+Note that, with a generalized linear model, fitting each neuron separately is
+equivalent to fitting the entire population at once. Fitting them separately can
+make your life easier by e.g., allowing you to parallelize more easily.
 
 :::
 
@@ -610,8 +613,7 @@ model. All of these are optional.
 - `solver_name`: this string specifies the solver algorithm. The default
   behavior depends on the regularizer, as each regularization scheme is only
   compatible with a subset of possible solvers. View the [GLM
-  docstring](https://nemos--264.org.readthedocs.build/en/264/generated/glm/nemos.glm.GLM.html#nemos.glm.GLM)
-  for more details.
+  docstring](nemos.glm.GLM) for more details.
 
 :::{warning}
 
@@ -626,16 +628,16 @@ solutions compare.
   about the parameters, such as sparsity. Regularization becomes more important
   as the number of input features, and thus model parameters, grows. NeMoS's
   solvers can be found within the [`nemos.regularizer`
-  module](https://nemos--264.org.readthedocs.build/en/264/api_reference.html#the-nemos-regularizer-module).
-  If you pass a string matching the name of one of our solvers, we initialize
-  the solver with the default arguments. If you need more control, you will need
-  to initialize and pass the object yourself.
+  module](regularizers). If you pass a string matching the name
+  of one of our solvers, we initialize the solver with the default arguments. If
+  you need more control, you will need to initialize and pass the object
+  yourself.
 
 - `observation_model`: this object links the firing rate and the observed data
   (in this case spikes), describing the distribution of neural activity (and
   thus changing the log-likelihood). For spiking data, we use the Poisson
   observation model, but we discuss other options for continuous data in our
-  [documentation](https://nemos--264.org.readthedocs.build/en/264/tutorials/plot_06_calcium_imaging.html).
+  [documentation](tutorial-calcium-imaging).
 
 For this example, we'll use an un-regularized LBFGS solver. We'll discuss
 regularization in a later tutorial.
@@ -656,8 +658,8 @@ behave!
 </div>
 
 ```{code-cell} ipython3
-# Initialize the model, specifying the solver. Since unregularized is the 
-# default choice, we don't need to specify it.
+# Initialize the model, specifying the solver. we'll accept the defaults
+# for everything else.
 model = nmo.glm.GLM(solver_name="LBFGS")
 ```
 
@@ -796,12 +798,12 @@ we know that neurons integrate information over time, so why don't we add extend
 model to reflect that?
 
 To do so, we will change our predictors, including variables that represent the
-history of the input current as additional columns. First, we must decide the duration
-of time that we think is relevant: does current passed to the cell 10 msec ago matter?
-what about 100 msec? 1 sec? To start, we should use our a priori knowledge about the
-system to determine a reasonable initial value. Later, we can examine the model
-parameters and do formal model comparison in order to determine how much history is
-necessary.
+history of the input current as additional columns. First, we must decide the
+duration of time that we think is relevant: does current passed to the cell 10
+msec ago matter? what about 100 msec? 1 sec? To start, we should use our a
+priori knowledge about the system to determine a reasonable initial value. In
+later notebooks, we'll learn how to use NeMoS with scikit-learn to do formal
+model comparison in order to determine how much history is necessary.
 
 For now, let's use a duration of 200 msec:
 
@@ -835,11 +837,12 @@ bin shift!), which will make the model more sensitive to noise in the data.
 
 A better idea is to do some dimensionality reduction on these predictors, by
 parametrizing them using **basis functions**. These will allow us to capture
-interesting non-linear effects with a relatively low-dimensional parametrization that
-preserves convexity. NeMoS has a whole library of basis objects available at
-`nmo.basis`, and choosing which set of basis functions and their parameters, like
-choosing the duration of the current history predictor, requires knowledge of your
-problem, but can later be examined using model comparison tools.
+interesting non-linear effects with a relatively low-dimensional parametrization
+that preserves convexity. NeMoS has a whole library of basis objects available
+at [`nmo.basis`](table_basis), and choosing which set of basis functions and
+their parameters, like choosing the duration of the current history predictor,
+requires knowledge of your problem, but can later be examined using model
+comparison tools.
 
 For history-type inputs like we're discussing, the raised cosine log-stretched basis
 first described in Pillow et al., 2005 [^pillow] is a good fit. This basis set has the nice
@@ -854,7 +857,7 @@ less important.
 doc_plots.plot_basis();
 ```
 
-[^3]: Pillow, J. W., Paninski, L., Uzzel, V. J., Simoncelli, E. P., & J.,
+[^pillow]: Pillow, J. W., Paninski, L., Uzzel, V. J., Simoncelli, E. P., & J.,
 C. E. (2005). Prediction and decoding of retinal ganglion cell responses
 with a probabilistic spiking model. Journal of Neuroscience, 25(47),
 11003–11013. http://dx.doi.org/10.1523/jneurosci.3305-05.2005
@@ -865,19 +868,19 @@ functions we want: with more basis functions, we'll be able to represent the eff
 the corresponding input with the higher precision, at the cost of adding additional
 parameters.
 
-We also need to specify whether we want to use the basis in convolutional (`"conv"`)
-or evaluation (`"eval"`) mode. This is determined by the type of feature we wish to
-represent with the basis:
+We also need to specify whether we want to use the convolutional (`Conv`) or
+evaluation (`Eval`) form of the basis. This is determined by the type of feature
+we wish to represent with the basis:
 
-- Evaluation mode transforms the input through the non-linear function defined by the
-  basis. This can be used to represent features such as spatial location and head
-  direction.
+- Evaluation bases transform the input through the non-linear function defined
+  by the basis. This can be used to represent features such as spatial location
+  and head direction.
 
-- Convolution mode applies a convolution of the input data to the bank of filters
-  defined by the basis, and is particularly useful when analyzing data with inherent
-  temporal dependencies, such as spike history or the history of input current in this
-  example. In convolution mode, we must additionally specify the `window_size`, the
-  length of the filters in bins.
+- Convolution bases apply a convolution of the input data to the bank of filters
+  defined by the basis, and is particularly useful when analyzing data with
+  inherent temporal dependencies, such as spike history or the history of input
+  current in this example. In convolution mode, we must additionally specify the
+  `window_size`, the length of the filters in bins.
 
 <div class="render-user render-presenter">
   - define a basis object
@@ -1090,15 +1093,18 @@ log-likelihood, however, and thus higher is better.
 
 :::
 
-Thus, we can see that, judging by the log-likelihood, the addition of the current
-history to the model does slightly improve it. However, notice that we increased our
-number of parameters tenfold, and only found a small improvement in performance.
-Increasing the number of parameters makes you more susceptible to overfitting &mdash;
-is this tradeoff worth it? To properly answer this question, one should split the
-dataset into test and train sets, training the model on one subset of the data and
-testing it on another to test the model's generalizability. We'll see a simple version
-of this in the next exercise, and a more streamlined version, using `scikit-learn`'s
-pipelining and cross-validation machinery, will be presented in an advanced exercise.
+Thus, we can see that, judging by the log-likelihood, the addition of the
+current history to the model makes the model slightly worse. Additionally,
+notice that we increased our number of parameters tenfold. Increasing the number
+of parameters makes you more susceptible to overfitting and so, while the
+difference is small here, it's possible that including the extra parameters has
+made us more sensitive noise? To properly investigate whether that's the case,
+one should split the dataset into test and train sets, training the model on one
+subset of the data and testing it on another to test the model's
+generalizability. We'll see a simple version of this in the [next
+notebook](./head_direction.md), and a more streamlined version, using
+`scikit-learn`'s pipelining and cross-validation machinery, will be shown in the
+[final notebook](./place_cells.md).
 
 ### Finishing up
 
@@ -1185,11 +1191,12 @@ We could try adding the following inputs to the model, alone or together:
   second time immediately after spiking), so maybe making the model aware of whether
   the neuron spiked recently could help better capture the onset transience.
 
-- More complicated tuning curve: as we saw with the tuning curve plots, neither model
-  explored here quite accurately captures the relationship between the current and the
-  firing rate. Can we improve that somehow? We saw that adding the current history
-  changed this relationship, but we can also change it without including the history
-  by using a basis object in `"eval"` mode.
+- More complicated tuning curve: as we saw with the tuning curve plots, neither
+  model explored here quite accurately captures the relationship between the
+  current and the firing rate. Can we improve that somehow? We saw that adding
+  the current history changed this relationship, but we can also change it
+  without including the history by using an `Eval` basis object. We'll see how
+  to do this in more detail in the [final notebook](./place_cells.md)
 
 <div class="render-all">
 
