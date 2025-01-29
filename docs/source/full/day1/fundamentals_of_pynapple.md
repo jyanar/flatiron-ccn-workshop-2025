@@ -236,6 +236,7 @@ print(tsd1.time_support)
 ```
 
 ```{code-cell} ipython3
+:tags: [render-all]
 ep_tmp = nap.IntervalSet(np.sort(np.random.uniform(0, 100, 20)))
 print(ep_tmp)
 ```
