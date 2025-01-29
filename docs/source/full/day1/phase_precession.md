@@ -1229,7 +1229,7 @@ place_fields = nap.compute_1d_tuning_curves(spikes, position, nb_bins=50)
 
 <div class="render-all">
     
-Let's decode position during `ex_run_ep` using 50 ms time bins.
+Let's decode position during `ex_run_ep` using 40 ms time bins.
 
 </div>
 
@@ -1240,7 +1240,7 @@ decoded_position, decoded_prob =
 </div>
 
 ```{code-cell} ipython3
-decoded_position, decoded_prob = nap.decode_1d(place_fields, spikes, ex_run_ep, 0.05)
+decoded_position, decoded_prob = nap.decode_1d(place_fields, spikes, ex_run_ep, 0.04)
 ```
 
 <div class="render-all">
