@@ -11,7 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# Spike-phase coupling and decoding: Phase precession and hippocampal sequences
+# Signal processing and decoding in pynapple
+
+## Identifying phase precession and hippocampal sequences
 
 <div class="render-all">
     
@@ -1370,7 +1372,7 @@ This gives us a much closer approximation of the animal's true position.
 - improved approximation
 </div>
 
-### Bonus: theta sequences
+### Decoding theta sequences
 
 <div class="render-all">
 
