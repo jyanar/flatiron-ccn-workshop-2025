@@ -350,7 +350,7 @@ One may think of padding the window (with zeros for example) but this may genera
 To avoid that, we can simply restrict our analysis to times $t$ larger than the window and NaN-pad earlier
 time-points;
 
-You can construct this feature matrix with the [`HistoryConv`](https://nemos--282.org.readthedocs.build/en/282/generated/basis/nemos.basis.HistoryConv.html#nemos.basis.HistoryConv) basis.
+You can construct this feature matrix with the [`HistoryConv`](nemos.basis.HistoryConv) basis.
 
 <div class="render-user">
 - This is equivalent to convolving `count` with an identity matrix.
