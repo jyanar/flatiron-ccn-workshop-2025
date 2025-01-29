@@ -247,7 +247,7 @@ jupyter lab
     ```
   - Restart the powershell and check that conda is in the path. Run for example `conda --version`.
 - If you see `sys:1: DeprecationWarning: Call to deprecated function (or staticmethod) _destroy.` when running `python scripts/setup.py`, we don't think this is actually a problem. As long as `check_setup.py` says everything looks good, you're fine!
-
+- If you see an error that mentions SSL verification and are using `conda`, add the following line to your `~/.condarc`: `ssl_verify: false`. Then restart your terminal and run the command again. (If you are using `uv`, I'm not sure how to set this configuration option.)
 
 ## Binder
 
