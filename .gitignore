@@ -164,11 +164,11 @@ cython_debug/
 .idea/
 
 # don't add files here, generate them
-docs/just_code
-docs/source/users
-docs/source/presenters
-notebooks/
-data/
+#docs/just_code
+#docs/source/users
+#docs/source/presenters
+#notebooks/
+#data/
 
 *nwb
 .DS_Store
